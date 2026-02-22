@@ -43,8 +43,8 @@ export function MagicLinkForm() {
   if (sent) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <Mail className="h-8 w-8 text-primary" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+          <Mail className="h-8 w-8 text-violet-600 dark:text-violet-400" />
         </div>
         <h2 className="text-xl font-semibold">Check your email</h2>
         <p className="text-sm text-muted-foreground">

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 export function EmptyState({ message }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-        <CalendarHeart className="h-10 w-10 text-muted-foreground" />
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+        <CalendarHeart className="h-10 w-10 text-violet-500 dark:text-violet-400" />
       </div>
       <div className="space-y-1">
         <h3 className="text-lg font-medium">No reminders yet</h3>

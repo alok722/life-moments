@@ -129,9 +129,9 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
   };
 
   return (
-    <Card>
+    <Card className="border-border/60 shadow-lg shadow-violet-500/5">
       <CardHeader>
-        <CardTitle>{isEditing ? "Edit Reminder" : "New Reminder"}</CardTitle>
+        <CardTitle className="bg-gradient-to-r from-violet-700 to-blue-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-blue-300">{isEditing ? "Edit Reminder" : "New Reminder"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
@@ -349,7 +349,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1">
+            <Button type="submit" disabled={submitting} className="flex-1 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md shadow-violet-500/20 hover:from-violet-700 hover:to-blue-600 dark:from-violet-500 dark:to-blue-400 dark:hover:from-violet-600 dark:hover:to-blue-500">
               {submitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

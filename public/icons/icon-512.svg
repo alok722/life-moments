@@ -1,50 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6d5fdb"/>
-      <stop offset="50%" stop-color="#5ba4b5"/>
-      <stop offset="100%" stop-color="#4dbba0"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
-      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c5cfc"/>
+      <stop offset="100%" stop-color="#5b8def"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
-
-  <!-- Clock circle -->
-  <circle cx="238" cy="268" r="128" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="12"/>
-
-  <!-- Major tick marks at 12, 3, 6, 9 -->
-  <line x1="238" y1="148" x2="238" y2="170" stroke="rgba(255,255,255,0.7)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="238" y1="366" x2="238" y2="388" stroke="rgba(255,255,255,0.7)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="118" y1="268" x2="140" y2="268" stroke="rgba(255,255,255,0.7)" stroke-width="7" stroke-linecap="round"/>
-  <line x1="336" y1="268" x2="358" y2="268" stroke="rgba(255,255,255,0.7)" stroke-width="7" stroke-linecap="round"/>
-
-  <!-- Minor tick marks -->
-  <line x1="294" y1="163" x2="287" y2="176" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="338" y1="213" x2="326" y2="218" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="338" y1="323" x2="326" y2="318" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="294" y1="373" x2="287" y2="360" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="182" y1="373" x2="189" y2="360" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="138" y1="323" x2="150" y2="318" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="138" y1="213" x2="150" y2="218" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-  <line x1="182" y1="163" x2="189" y2="176" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round"/>
-
-  <!-- Minute hand (pointing to ~10 o'clock) -->
-  <line x1="238" y1="268" x2="190" y2="188" stroke="white" stroke-width="10" stroke-linecap="round"/>
-  <!-- Hour hand (pointing to ~2 o'clock) -->
-  <line x1="238" y1="268" x2="290" y2="230" stroke="white" stroke-width="10" stroke-linecap="round"/>
-  <!-- Center dot -->
-  <circle cx="238" cy="268" r="10" fill="white"/>
-
-  <!-- Organic leaf/sprout emerging from upper right of clock -->
-  <path d="M330 180 C345 150 370 122 420 105" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="8" stroke-linecap="round"/>
-  <!-- Primary leaf -->
-  <path d="M372 138 C392 118 412 110 420 105 C414 126 400 144 380 152Z" fill="rgba(255,255,255,0.8)"/>
-  <!-- Secondary leaf (smaller) -->
-  <path d="M350 164 C362 146 378 132 396 122 C388 142 372 158 356 166Z" fill="rgba(255,255,255,0.6)"/>
-  <!-- Tiny accent leaf bud -->
-  <path d="M338 176 C344 168 352 160 360 155 C356 165 348 173 340 177Z" fill="rgba(255,255,255,0.4)"/>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <text x="256" y="330" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="256" fill="white" letter-spacing="-10">LM</text>
+  <circle cx="420" cy="110" r="36" fill="#34d399" opacity="0.9"/>
 </svg>

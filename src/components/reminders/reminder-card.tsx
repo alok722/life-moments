@@ -50,11 +50,11 @@ export function ReminderCard({ reminder, onDelete }: ReminderCardProps) {
   return (
     <>
       <Card
-        className="group relative cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
+        className="group relative cursor-pointer overflow-hidden border-border/60 transition-all hover:shadow-md hover:shadow-violet-500/5"
         onClick={() => showWish && setWishOpen(true)}
       >
         <CardContent className="flex items-start gap-3 p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-lg dark:bg-violet-900/30">
             {icon}
           </div>
           <div className="min-w-0 flex-1">
