@@ -14,7 +14,8 @@ export function useReminders() {
     const { data, error } = await supabase
       .from("reminders")
       .select("*")
-      .order("event_date", { ascending: true });
+      .order("event_month", { ascending: true })
+      .order("event_day", { ascending: true });
 
     if (!error && data) {
       setReminders(data as Reminder[]);

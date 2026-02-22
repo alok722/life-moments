@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     const { event_type, relation, title } = parsed.data;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `Generate 3 short, heartfelt ${event_type} wishes${relation ? ` for my ${relation}` : ""}${title ? ` regarding "${title}"` : ""}. 
 Keep each wish under 2 sentences. Return as a JSON array of strings. Only return the JSON array, no other text.`;

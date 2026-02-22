@@ -118,18 +118,33 @@ export function ReminderList() {
         onTypeChange={setActiveType}
       />
 
-      <Tabs defaultValue="today">
+      <Tabs defaultValue="all">
         <TabsList className="w-full">
+          <TabsTrigger value="all" className="flex-1">
+            All ({filtered.length})
+          </TabsTrigger>
           <TabsTrigger value="today" className="flex-1">
             Today ({dueToday.length})
           </TabsTrigger>
           <TabsTrigger value="week" className="flex-1">
-            This Week ({thisWeek.length})
+            Week ({thisWeek.length})
           </TabsTrigger>
           <TabsTrigger value="month" className="flex-1">
             Month ({thisMonth.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="all" className="mt-4 space-y-3">
+          {filtered.length === 0 ? (
+            <EmptyState message="No reminders added yet." />
+          ) : (
+            filtered.map((r) => (
+              <SwipeActions key={r.id} onDelete={() => setDeleteId(r.id)}>
+                <ReminderCard reminder={r} onDelete={setDeleteId} />
+              </SwipeActions>
+            ))
+          )}
+        </TabsContent>
 
         <TabsContent value="today" className="mt-4 space-y-3">
           {dueToday.length === 0 ? (
