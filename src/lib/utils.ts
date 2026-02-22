@@ -20,7 +20,7 @@ export function computeNextReminderAt(
   let eventDate = new Date(year, month - 1, day, 0, 0, 0);
 
   if (eventDate <= now) {
-    eventDate = new Date(year + 1, month - 1, day, anchorHour, 0, 0);
+    eventDate = new Date(year + 1, month - 1, day, 0, 0, 0);
   }
 
   const reminderDate = new Date(eventDate);
