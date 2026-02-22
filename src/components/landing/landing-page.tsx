@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const fadeUp: Variants = {
@@ -93,40 +94,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
       <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 32 32"
-              xmlns="http://www.w3.org/2000/svg"
-              className="shrink-0"
-            >
-              <defs>
-                <linearGradient
-                  id="landing-g"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#7c5cfc" />
-                  <stop offset="100%" stopColor="#5b8def" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#landing-g)" />
-              <text
-                x="16"
-                y="22"
-                textAnchor="middle"
-                fontFamily="system-ui,-apple-system,sans-serif"
-                fontWeight="700"
-                fontSize="17"
-                fill="white"
-                letterSpacing="-0.5"
-              >
-                LM
-              </text>
-              <circle cx="25" cy="8" r="2.5" fill="#34d399" opacity="0.9" />
-            </svg>
+            <Logo size={28} className="shrink-0" />
             <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent dark:from-violet-400 dark:to-blue-300">
               Life Moments
             </span>
@@ -510,39 +478,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
       <footer className="border-t border-border/60 px-4 py-6">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 sm:flex-row">
           <div className="flex items-center gap-2">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 32 32"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient
-                  id="footer-g"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#7c5cfc" />
-                  <stop offset="100%" stopColor="#5b8def" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#footer-g)" />
-              <text
-                x="16"
-                y="22"
-                textAnchor="middle"
-                fontFamily="system-ui,-apple-system,sans-serif"
-                fontWeight="700"
-                fontSize="17"
-                fill="white"
-                letterSpacing="-0.5"
-              >
-                LM
-              </text>
-              <circle cx="25" cy="8" r="2.5" fill="#34d399" opacity="0.9" />
-            </svg>
+            <Logo size={20} />
             <span className="text-sm font-medium text-muted-foreground">
               Life Moments
             </span>
