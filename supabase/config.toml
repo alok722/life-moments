@@ -1,5 +1,11 @@
-[project]
-id = "your-project-id"
+project_id = "dkeaisvxqybgpmfbukjy"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
 
 [functions.send-reminders]
 verify_jwt = false
