@@ -1,0 +1,23 @@
+-- Enable pg_cron extension (must be done by superuser in Supabase dashboard)
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Schedule send-reminders to run every 15 minutes
+-- Run this in the Supabase SQL editor after deploying the edge function:
+--
+-- SELECT cron.schedule(
+--   'send-reminders-job',
+--   '*/15 * * * *',
+--   $$
+--   SELECT net.http_post(
+--     url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-reminders',
+--     headers := jsonb_build_object(
+--       'Authorization', 'Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY',
+--       'Content-Type', 'application/json'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+--
+-- To verify: SELECT * FROM cron.job;
+-- To remove: SELECT cron.unschedule('send-reminders-job');

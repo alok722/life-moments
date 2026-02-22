@@ -1,0 +1,8 @@
+[project]
+id = "your-project-id"
+
+[functions.send-reminders]
+verify_jwt = false
+
+[functions.generate-wish]
+verify_jwt = true

@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Life Moments
+
+A mobile-first reminder web app. Never miss a moment that matters.
+
+Built with Next.js (App Router), Supabase, Resend, and Google Gemini.
+
+## Features
+
+- **Magic Link Auth** — passwordless sign-in via email
+- **CRUD Reminders** — create, edit, delete reminders with date pickers and recurrence
+- **Dashboard** — Today / This Week / This Month tabs with search and type filters
+- **Email Reminders** — Supabase cron triggers an Edge Function every 15 min to send pending reminders via Resend
+- **AI Wish Generator** — Gemini-powered wish suggestions for birthdays, anniversaries, etc.
+- **PWA** — installable on iOS/Android with offline shell caching
+- **Dark Mode** — system-aware theme toggle
+- **Mobile-First** — optimized for 375px+ screens with swipe-to-delete and thumb-friendly layout
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Frontend | Next.js 16, TypeScript, Tailwind CSS v4, shadcn/ui |
+| Auth | Supabase Auth (magic link) |
+| Database | Supabase PostgreSQL + RLS |
+| Email | Resend API |
+| AI | Google Gemini 2.0 Flash |
+| Deployment | Vercel (frontend) + Supabase (backend) |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- A [Supabase](https://supabase.com) project
+- A [Resend](https://resend.com) account
+- A [Google AI Studio](https://aistudio.google.com) API key
+
+### 1. Clone and install
+
+```bash
+git clone <your-repo-url>
+cd life-moments
+npm install
+```
+
+### 2. Set up environment variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon/public key |
+| `GOOGLE_GEMINI_API_KEY` | Google Gemini API key |
+
+### 3. Set up Supabase
+
+1. Go to your Supabase project's SQL Editor
+2. Run `supabase/migrations/001_create_reminders.sql` to create the table, indexes, and RLS policies
+3. Enable the `pg_net` and `pg_cron` extensions in the Supabase dashboard (Database > Extensions)
+4. Run the cron setup from `supabase/migrations/002_create_cron.sql` (update the URL and service role key)
+
+### 4. Deploy Edge Functions
+
+```bash
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Set secrets
+supabase secrets set RESEND_API_KEY=re_xxxxx
+supabase secrets set GOOGLE_GEMINI_API_KEY=AIxxxxx
+
+# Deploy
+supabase functions deploy send-reminders
+supabase functions deploy generate-wish
+```
+
+### 5. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 6. Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push to GitHub
+2. Import in [Vercel](https://vercel.com)
+3. Set environment variables in Vercel dashboard
+4. Deploy
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/
+    (auth)/           # Login/signup pages + auth callback
+    (protected)/      # Dashboard + reminder CRUD (requires auth)
+    api/              # Vercel API routes (AI wish generator)
+  components/
+    ui/               # shadcn/ui components
+    reminders/        # Reminder-specific components
+    layout/           # Nav, bottom button, theme toggle
+    auth/             # Magic link form
+  lib/
+    supabase/         # Client/server/middleware helpers
+    validations.ts    # Zod schemas
+    constants.ts      # Event types, icons
+  types/              # TypeScript types
+  hooks/              # Custom React hooks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+supabase/
+  migrations/         # SQL migrations
+  functions/          # Edge Functions (send-reminders, generate-wish)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Resend Configuration
 
-## Deploy on Vercel
+1. Create a Resend account at [resend.com](https://resend.com)
+2. Verify your domain (or use the default `onboarding@resend.dev` for testing)
+3. Create an API key
+4. Store it as a Supabase secret: `supabase secrets set RESEND_API_KEY=re_xxxxx`
+5. Update the `from` address in `supabase/functions/send-reminders/index.ts`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
