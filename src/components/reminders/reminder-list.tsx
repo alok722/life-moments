@@ -1,13 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  isToday,
-  isThisWeek,
-  isThisMonth,
-  isBefore,
-  startOfToday,
-} from "date-fns";
 import { useReminders } from "@/hooks/use-reminders";
 import { ReminderCard } from "./reminder-card";
 import { ReminderFilters } from "./reminder-filters";
@@ -16,8 +9,31 @@ import { DeleteReminderDialog } from "./delete-reminder-dialog";
 import { SwipeActions } from "./swipe-actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { EventType } from "@/types/reminder";
+import type { EventType, Reminder } from "@/types/reminder";
 import { toast } from "sonner";
+
+function getNextOccurrence(r: Reminder): Date {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  let d = new Date(thisYear, r.event_month - 1, r.event_day);
+  if (d < now) {
+    d = new Date(thisYear + 1, r.event_month - 1, r.event_day);
+  }
+  return d;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function isWithinDays(target: Date, from: Date, days: number): boolean {
+  const diff = (target.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
+  return diff > 0 && diff <= days;
+}
 
 export function ReminderList() {
   const { reminders, loading, deleteReminder } = useReminders();
@@ -36,35 +52,37 @@ export function ReminderList() {
     });
   }, [reminders, search, activeType]);
 
-  const today = useMemo(
-    () => filtered.filter((r) => isToday(new Date(r.event_date + "T00:00:00"))),
-    [filtered]
+  const today = new Date();
+
+  const dueToday = useMemo(
+    () =>
+      filtered.filter((r) => {
+        const next = getNextOccurrence(r);
+        return isSameDay(next, today);
+      }),
+    [filtered, today]
   );
 
   const thisWeek = useMemo(
     () =>
       filtered.filter((r) => {
-        const d = new Date(r.event_date + "T00:00:00");
-        return (
-          isThisWeek(d, { weekStartsOn: 1 }) &&
-          !isToday(d) &&
-          !isBefore(d, startOfToday())
-        );
+        const next = getNextOccurrence(r);
+        return !isSameDay(next, today) && isWithinDays(next, today, 7);
       }),
-    [filtered]
+    [filtered, today]
   );
 
   const thisMonth = useMemo(
     () =>
       filtered.filter((r) => {
-        const d = new Date(r.event_date + "T00:00:00");
+        const next = getNextOccurrence(r);
         return (
-          isThisMonth(d) &&
-          !isThisWeek(d, { weekStartsOn: 1 }) &&
-          !isBefore(d, startOfToday())
+          !isSameDay(next, today) &&
+          !isWithinDays(next, today, 7) &&
+          isWithinDays(next, today, 31)
         );
       }),
-    [filtered]
+    [filtered, today]
   );
 
   const handleDelete = async () => {
@@ -103,7 +121,7 @@ export function ReminderList() {
       <Tabs defaultValue="today">
         <TabsList className="w-full">
           <TabsTrigger value="today" className="flex-1">
-            Today ({today.length})
+            Today ({dueToday.length})
           </TabsTrigger>
           <TabsTrigger value="week" className="flex-1">
             This Week ({thisWeek.length})
@@ -114,10 +132,10 @@ export function ReminderList() {
         </TabsList>
 
         <TabsContent value="today" className="mt-4 space-y-3">
-          {today.length === 0 ? (
+          {dueToday.length === 0 ? (
             <EmptyState message="No reminders due today." />
           ) : (
-            today.map((r) => (
+            dueToday.map((r) => (
               <SwipeActions key={r.id} onDelete={() => setDeleteId(r.id)}>
                 <ReminderCard reminder={r} onDelete={setDeleteId} />
               </SwipeActions>

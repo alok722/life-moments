@@ -2,25 +2,24 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { reminderSchema, type ReminderFormData } from "@/lib/validations";
-import { EVENT_TYPES, RECURRENCE_TYPES } from "@/lib/constants";
+import {
+  EVENT_TYPES,
+  RECURRENCE_TYPES,
+  REMINDER_OFFSETS,
+  RELATIONS,
+  MONTHS,
+} from "@/lib/constants";
 import type { Reminder } from "@/types/reminder";
+import { computeNextReminderAt, getDaysInMonth } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -29,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { WishGenerator } from "./wish-generator";
 
@@ -54,20 +52,19 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
     defaultValues: {
       title: reminder?.title ?? "",
       event_type: reminder?.event_type ?? undefined,
-      relation: reminder?.relation ?? "",
-      event_date: reminder?.event_date ?? "",
-      reminder_time: reminder?.reminder_time
-        ? reminder.reminder_time.slice(0, 16)
-        : "",
-      is_recurring: reminder?.is_recurring ?? false,
-      recurrence_type: reminder?.recurrence_type ?? undefined,
+      relation: reminder?.relation ?? undefined,
+      event_month: reminder?.event_month ?? undefined,
+      event_day: reminder?.event_day ?? undefined,
+      reminder_offset: reminder?.reminder_offset ?? undefined,
+      recurrence_type: reminder?.recurrence_type ?? "yearly",
       notes: reminder?.notes ?? "",
     },
   });
 
-  const eventDate = watch("event_date");
-  const isRecurring = watch("is_recurring");
   const eventType = watch("event_type");
+  const eventMonth = watch("event_month");
+  const eventDay = watch("event_day");
+  const maxDays = eventMonth ? getDaysInMonth(eventMonth) : 31;
 
   const onSubmit = async (data: ReminderFormData) => {
     setSubmitting(true);
@@ -77,15 +74,22 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const nextReminderAt = computeNextReminderAt(
+        data.event_month,
+        data.event_day,
+        data.reminder_offset
+      );
+
       const payload = {
         title: data.title,
         event_type: data.event_type,
         relation: data.relation || null,
-        event_date: data.event_date,
-        reminder_time: new Date(data.reminder_time).toISOString(),
-        is_recurring: data.is_recurring,
-        recurrence_type: data.is_recurring ? data.recurrence_type : null,
+        event_month: data.event_month,
+        event_day: data.event_day,
+        reminder_offset: data.reminder_offset,
+        recurrence_type: data.recurrence_type,
         notes: data.notes || null,
+        next_reminder_at: nextReminderAt,
         user_id: user.id,
       };
 
@@ -96,11 +100,13 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
             title: payload.title,
             event_type: payload.event_type,
             relation: payload.relation,
-            event_date: payload.event_date,
-            reminder_time: payload.reminder_time,
-            is_recurring: payload.is_recurring,
+            event_month: payload.event_month,
+            event_day: payload.event_day,
+            reminder_offset: payload.reminder_offset,
             recurrence_type: payload.recurrence_type,
             notes: payload.notes,
+            next_reminder_at: payload.next_reminder_at,
+            email_sent: false,
           })
           .eq("id", reminder.id);
         if (error) throw error;
@@ -175,119 +181,143 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
 
           {/* Relation */}
           <div className="grid gap-2">
-            <Label htmlFor="relation">Relation (optional)</Label>
-            <Input
-              id="relation"
-              placeholder="Mother, Friend, etc."
-              {...register("relation")}
-            />
+            <Label>Relation</Label>
+            <Select
+              value={watch("relation") ?? undefined}
+              onValueChange={(val) => setValue("relation", val)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select relation" />
+              </SelectTrigger>
+              <SelectContent>
+                {RELATIONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Event Date */}
-          <div className="grid gap-2">
-            <Label>Event Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !eventDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {eventDate
-                    ? format(new Date(eventDate + "T00:00:00"), "PPP")
-                    : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={eventDate ? new Date(eventDate + "T00:00:00") : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      setValue("event_date", format(date, "yyyy-MM-dd"), {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            {errors.event_date && (
-              <p className="text-xs text-destructive">
-                {errors.event_date.message}
-              </p>
-            )}
-          </div>
-
-          {/* Reminder Time */}
-          <div className="grid gap-2">
-            <Label htmlFor="reminder_time">Reminder Date & Time</Label>
-            <Input
-              id="reminder_time"
-              type="datetime-local"
-              {...register("reminder_time")}
-            />
-            {errors.reminder_time && (
-              <p className="text-xs text-destructive">
-                {errors.reminder_time.message}
-              </p>
-            )}
-          </div>
-
-          {/* Recurring */}
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label htmlFor="is_recurring" className="cursor-pointer">
-                Recurring
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Repeat this reminder
-              </p>
-            </div>
-            <Switch
-              id="is_recurring"
-              checked={isRecurring}
-              onCheckedChange={(checked) =>
-                setValue("is_recurring", checked, { shouldValidate: true })
-              }
-            />
-          </div>
-
-          {isRecurring && (
+          {/* Event Month & Day */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label>Recurrence</Label>
+              <Label>Month</Label>
               <Select
-                value={watch("recurrence_type") ?? undefined}
+                value={eventMonth?.toString()}
                 onValueChange={(val) =>
-                  setValue(
-                    "recurrence_type",
-                    val as ReminderFormData["recurrence_type"],
-                    { shouldValidate: true }
-                  )
+                  setValue("event_month", parseInt(val), {
+                    shouldValidate: true,
+                  })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
+                  <SelectValue placeholder="Month" />
                 </SelectTrigger>
                 <SelectContent>
-                  {RECURRENCE_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={i} value={(i + 1).toString()}>
+                      {m}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.recurrence_type && (
+              {errors.event_month && (
                 <p className="text-xs text-destructive">
-                  {errors.recurrence_type.message}
+                  {errors.event_month.message}
                 </p>
               )}
             </div>
-          )}
+            <div className="grid gap-2">
+              <Label>Day</Label>
+              <Select
+                value={eventDay?.toString()}
+                onValueChange={(val) =>
+                  setValue("event_day", parseInt(val), {
+                    shouldValidate: true,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: maxDays }, (_, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                      {i + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.event_day && (
+                <p className="text-xs text-destructive">
+                  {errors.event_day.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Reminder Offset */}
+          <div className="grid gap-2">
+            <Label>Remind Me</Label>
+            <Select
+              value={watch("reminder_offset")}
+              onValueChange={(val) =>
+                setValue(
+                  "reminder_offset",
+                  val as ReminderFormData["reminder_offset"],
+                  { shouldValidate: true }
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="When to remind" />
+              </SelectTrigger>
+              <SelectContent>
+                {REMINDER_OFFSETS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.reminder_offset && (
+              <p className="text-xs text-destructive">
+                {errors.reminder_offset.message}
+              </p>
+            )}
+          </div>
+
+          {/* Recurrence */}
+          <div className="grid gap-2">
+            <Label>Repeats</Label>
+            <Select
+              value={watch("recurrence_type")}
+              onValueChange={(val) =>
+                setValue(
+                  "recurrence_type",
+                  val as ReminderFormData["recurrence_type"],
+                  { shouldValidate: true }
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="How often" />
+              </SelectTrigger>
+              <SelectContent>
+                {RECURRENCE_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.recurrence_type && (
+              <p className="text-xs text-destructive">
+                {errors.recurrence_type.message}
+              </p>
+            )}
+          </div>
 
           {/* Notes */}
           <div className="grid gap-2">

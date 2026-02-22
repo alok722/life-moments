@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY")!;
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
 interface Reminder {
   id: string;
@@ -10,11 +16,43 @@ interface Reminder {
   title: string;
   event_type: string;
   relation: string | null;
-  event_date: string;
-  reminder_time: string;
-  is_recurring: boolean;
-  recurrence_type: string | null;
+  event_month: number;
+  event_day: number;
+  reminder_offset: string;
+  recurrence_type: string;
+  next_reminder_at: string;
   email_sent: boolean;
+}
+
+async function generateWish(
+  eventType: string,
+  relation: string | null,
+  title: string
+): Promise<string> {
+  try {
+    if (eventType === "bill") return "";
+
+    const prompt = `Generate 1 short, heartfelt ${eventType} wish${relation ? ` for my ${relation}` : ""}${title ? ` regarding "${title}"` : ""}. Keep it under 2 sentences. Return only the wish text, no quotes or extra formatting.`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.8, maxOutputTokens: 200 },
+        }),
+      }
+    );
+
+    if (!res.ok) return "";
+
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  } catch {
+    return "";
+  }
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -40,27 +78,64 @@ async function sendEmail(to: string, subject: string, html: string) {
   return res.json();
 }
 
-function advanceReminderTime(
-  reminderTime: string,
-  recurrenceType: string | null
+function computeNextReminderAt(
+  month: number,
+  day: number,
+  offset: string,
+  recurrenceType: string
 ): string {
-  const date = new Date(reminderTime);
+  const now = new Date();
+  let eventDate: Date;
 
   switch (recurrenceType) {
+    case "daily": {
+      eventDate = new Date(now);
+      eventDate.setDate(eventDate.getDate() + 1);
+      eventDate.setHours(9, 0, 0, 0);
+      break;
+    }
+    case "weekly": {
+      eventDate = new Date(now);
+      eventDate.setDate(eventDate.getDate() + 7);
+      eventDate.setHours(9, 0, 0, 0);
+      break;
+    }
+    case "monthly": {
+      eventDate = new Date(now.getFullYear(), now.getMonth() + 1, day, 9, 0, 0);
+      break;
+    }
     case "yearly":
-      date.setFullYear(date.getFullYear() + 1);
+    default: {
+      eventDate = new Date(now.getFullYear(), month - 1, day, 9, 0, 0);
+      if (eventDate <= now) {
+        eventDate = new Date(now.getFullYear() + 1, month - 1, day, 9, 0, 0);
+      }
       break;
-    case "monthly":
-      date.setMonth(date.getMonth() + 1);
-      break;
-    case "custom":
-      date.setFullYear(date.getFullYear() + 1);
-      break;
-    default:
-      date.setFullYear(date.getFullYear() + 1);
+    }
   }
 
-  return date.toISOString();
+  const reminderDate = new Date(eventDate);
+  switch (offset) {
+    case "1h":
+      reminderDate.setHours(reminderDate.getHours() - 1);
+      break;
+    case "4h":
+      reminderDate.setHours(reminderDate.getHours() - 4);
+      break;
+    case "1d":
+      reminderDate.setDate(reminderDate.getDate() - 1);
+      break;
+    case "2d":
+      reminderDate.setDate(reminderDate.getDate() - 2);
+      break;
+    case "1w":
+      reminderDate.setDate(reminderDate.getDate() - 7);
+      break;
+    case "same":
+      break;
+  }
+
+  return reminderDate.toISOString();
 }
 
 Deno.serve(async () => {
@@ -70,7 +145,7 @@ Deno.serve(async () => {
     const { data: reminders, error: fetchError } = await supabase
       .from("reminders")
       .select("*")
-      .lte("reminder_time", new Date().toISOString())
+      .lte("next_reminder_at", new Date().toISOString())
       .eq("email_sent", false)
       .limit(50);
 
@@ -94,6 +169,13 @@ Deno.serve(async () => {
 
         if (!user?.email) continue;
 
+        const wish = await generateWish(
+          reminder.event_type,
+          reminder.relation,
+          reminder.title
+        );
+
+        const eventDateStr = `${MONTHS[reminder.event_month - 1]} ${reminder.event_day}`;
         const subject = `Reminder: ${reminder.title}`;
         const html = `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -102,38 +184,35 @@ Deno.serve(async () => {
               <h3 style="margin: 0 0 8px;">${reminder.title}</h3>
               <p style="color: #6b7280; margin: 4px 0;">Type: ${reminder.event_type}</p>
               ${reminder.relation ? `<p style="color: #6b7280; margin: 4px 0;">For: ${reminder.relation}</p>` : ""}
-              <p style="color: #6b7280; margin: 4px 0;">Date: ${new Date(reminder.event_date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+              <p style="color: #6b7280; margin: 4px 0;">Date: ${eventDateStr}</p>
             </div>
+            ${wish ? `
+            <div style="background: #fefce8; border-radius: 12px; padding: 20px; margin: 16px 0; border-left: 4px solid #eab308;">
+              <p style="margin: 0 0 4px; font-weight: 600; color: #854d0e;">Suggested Wish</p>
+              <p style="margin: 0; color: #713f12; font-style: italic;">${wish}</p>
+            </div>
+            ` : ""}
             <p style="color: #9ca3af; font-size: 12px;">Sent by Life Moments</p>
           </div>
         `;
 
         await sendEmail(user.email, subject, html);
 
-        if (reminder.is_recurring) {
-          const newReminderTime = advanceReminderTime(
-            reminder.reminder_time,
-            reminder.recurrence_type
-          );
-          const newEventDate = advanceReminderTime(
-            reminder.event_date,
-            reminder.recurrence_type
-          );
+        // Schedule next occurrence
+        const nextReminderAt = computeNextReminderAt(
+          reminder.event_month,
+          reminder.event_day,
+          reminder.reminder_offset,
+          reminder.recurrence_type
+        );
 
-          await supabase
-            .from("reminders")
-            .update({
-              email_sent: false,
-              reminder_time: newReminderTime,
-              event_date: newEventDate.split("T")[0],
-            })
-            .eq("id", reminder.id);
-        } else {
-          await supabase
-            .from("reminders")
-            .update({ email_sent: true })
-            .eq("id", reminder.id);
-        }
+        await supabase
+          .from("reminders")
+          .update({
+            email_sent: false,
+            next_reminder_at: nextReminderAt,
+          })
+          .eq("id", reminder.id);
 
         sentCount++;
       } catch (err) {

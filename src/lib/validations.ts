@@ -11,14 +11,15 @@ export const reminderSchema = z.object({
   event_type: z.enum(["birthday", "anniversary", "bill", "custom"], {
     message: "Select an event type",
   }),
-  relation: z.string().max(100).optional().nullable(),
-  event_date: z.string().min(1, "Event date is required"),
-  reminder_time: z.string().min(1, "Reminder time is required"),
-    is_recurring: z.boolean(),
-  recurrence_type: z
-    .enum(["yearly", "monthly", "custom"])
-    .optional()
-    .nullable(),
+  relation: z.string().optional().nullable(),
+  event_month: z.number().min(1).max(12, "Select a month"),
+  event_day: z.number().min(1).max(31, "Select a day"),
+  reminder_offset: z.enum(["1h", "4h", "1d", "2d", "1w", "same"], {
+    message: "Select when to remind",
+  }),
+  recurrence_type: z.enum(["daily", "weekly", "monthly", "yearly"], {
+    message: "Select recurrence",
+  }),
   notes: z.string().max(500).optional().nullable(),
 });
 
