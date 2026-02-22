@@ -1,14 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#db2777"/>
+      <stop offset="0%" stop-color="#6d5fdb"/>
+      <stop offset="50%" stop-color="#5ba4b5"/>
+      <stop offset="100%" stop-color="#4dbba0"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
-  <path d="M16 25 C10 20 5 16 5 12 C5 8.5 8 6.5 11.3 6.5 C13.3 6.5 15 7.5 16 9 C17 7.5 18.7 6.5 20.7 6.5 C24 6.5 27 8.5 27 12 C27 16 22 20 16 25Z" fill="rgba(255,255,255,0.95)"/>
-  <circle cx="16" cy="14" r="4.5" fill="none" stroke="url(#bg)" stroke-width="1.2"/>
-  <line x1="16" y1="14" x2="16" y2="10.5" stroke="#7c3aed" stroke-width="1.1" stroke-linecap="round"/>
-  <line x1="16" y1="14" x2="18.5" y2="13.3" stroke="#db2777" stroke-width="0.9" stroke-linecap="round"/>
-  <circle cx="16" cy="14" r="0.8" fill="#7c3aed"/>
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+  <!-- Clock circle -->
+  <circle cx="15" cy="16.5" r="8" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.8"/>
+  <!-- Hour marks -->
+  <line x1="15" y1="9.5" x2="15" y2="10.8" stroke="rgba(255,255,255,0.7)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="15" y1="22.2" x2="15" y2="23.5" stroke="rgba(255,255,255,0.7)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="8" y1="16.5" x2="9.3" y2="16.5" stroke="rgba(255,255,255,0.7)" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="20.7" y1="16.5" x2="22" y2="16.5" stroke="rgba(255,255,255,0.7)" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- Minute hand (pointing to ~10) -->
+  <line x1="15" y1="16.5" x2="12" y2="11.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Hour hand (pointing to ~2) -->
+  <line x1="15" y1="16.5" x2="18.5" y2="14" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="15" cy="16.5" r="1" fill="white"/>
+  <!-- Leaf / sprout emerging from top-right -->
+  <path d="M20 11 C21 9 23 7.5 26 7 C25.5 10 24 12 22 13" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 13 C23.5 11.5 25.5 10.5 26 7" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.7" stroke-linecap="round"/>
 </svg>

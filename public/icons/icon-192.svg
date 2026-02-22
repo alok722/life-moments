@@ -1,28 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#db2777"/>
+      <stop offset="0%" stop-color="#6d5fdb"/>
+      <stop offset="50%" stop-color="#5ba4b5"/>
+      <stop offset="100%" stop-color="#4dbba0"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
     </linearGradient>
   </defs>
   <rect width="192" height="192" rx="42" fill="url(#bg)"/>
   <rect width="192" height="192" rx="42" fill="url(#shine)"/>
-  <!-- Heart shape -->
-  <path d="M96 148 C60 120 32 96 32 72 C32 52 48 38 68 38 C80 38 90 44 96 54 C102 44 112 38 124 38 C144 38 160 52 160 72 C160 96 132 120 96 148Z" fill="rgba(255,255,255,0.95)"/>
+
   <!-- Clock circle -->
-  <circle cx="96" cy="84" r="26" fill="none" stroke="url(#bg)" stroke-width="3.5"/>
-  <!-- Clock hands -->
-  <line x1="96" y1="84" x2="96" y2="66" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
-  <line x1="96" y1="84" x2="108" y2="80" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="90" cy="100" r="48" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="5"/>
+
+  <!-- Hour tick marks at 12, 3, 6, 9 -->
+  <line x1="90" y1="56" x2="90" y2="64" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="90" y1="136" x2="90" y2="144" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="46" y1="100" x2="54" y2="100" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="126" y1="100" x2="134" y2="100" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Small tick marks at 1,2,4,5,7,8,10,11 -->
+  <line x1="111" y1="61" x2="108" y2="66" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="126" y1="79" x2="121" y2="81" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="126" y1="121" x2="121" y2="119" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="111" y1="139" x2="108" y2="134" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="69" y1="139" x2="72" y2="134" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="54" y1="121" x2="59" y2="119" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="54" y1="79" x2="59" y2="81" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="69" y1="61" x2="72" y2="66" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Minute hand -->
+  <line x1="90" y1="100" x2="72" y2="70" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Hour hand -->
+  <line x1="90" y1="100" x2="110" y2="86" stroke="white" stroke-width="4" stroke-linecap="round"/>
   <!-- Center dot -->
-  <circle cx="96" cy="84" r="2.5" fill="#7c3aed"/>
-  <!-- Small sparkle dots -->
-  <circle cx="48" cy="46" r="3" fill="rgba(255,255,255,0.6)"/>
-  <circle cx="152" cy="142" r="2" fill="rgba(255,255,255,0.4)"/>
-  <circle cx="40" cy="140" r="2.5" fill="rgba(255,255,255,0.35)"/>
-  <circle cx="156" cy="50" r="2" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="90" cy="100" r="4" fill="white"/>
+
+  <!-- Leaf stem emerging from clock -->
+  <path d="M124 68 C130 56 140 46 158 40" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Leaf 1 -->
+  <path d="M140 52 C148 44 156 41 158 40 C156 48 150 54 142 56Z" fill="rgba(255,255,255,0.8)"/>
+  <!-- Leaf 2 (smaller) -->
+  <path d="M132 62 C137 55 143 50 148 47 C145 54 140 59 134 62Z" fill="rgba(255,255,255,0.6)"/>
 </svg>
