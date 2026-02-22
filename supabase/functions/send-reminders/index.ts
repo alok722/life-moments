@@ -91,24 +91,24 @@ function computeNextReminderAt(
     case "daily": {
       eventDate = new Date(now);
       eventDate.setDate(eventDate.getDate() + 1);
-      eventDate.setHours(9, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
       break;
     }
     case "weekly": {
       eventDate = new Date(now);
       eventDate.setDate(eventDate.getDate() + 7);
-      eventDate.setHours(9, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
       break;
     }
     case "monthly": {
-      eventDate = new Date(now.getFullYear(), now.getMonth() + 1, day, 9, 0, 0);
+      eventDate = new Date(now.getFullYear(), now.getMonth() + 1, day, 0, 0, 0);
       break;
     }
     case "yearly":
     default: {
-      eventDate = new Date(now.getFullYear(), month - 1, day, 9, 0, 0);
+      eventDate = new Date(now.getFullYear(), month - 1, day, 0, 0, 0);
       if (eventDate <= now) {
-        eventDate = new Date(now.getFullYear() + 1, month - 1, day, 9, 0, 0);
+        eventDate = new Date(now.getFullYear() + 1, month - 1, day, 0, 0, 0);
       }
       break;
     }

@@ -17,11 +17,10 @@ export function computeNextReminderAt(
   const now = new Date();
   const year = now.getFullYear();
 
-  let eventDate = new Date(year, month - 1, day, 9, 0, 0);
+  let eventDate = new Date(year, month - 1, day, 0, 0, 0);
 
-  // If the event date already passed this year, use next year
   if (eventDate <= now) {
-    eventDate = new Date(year + 1, month - 1, day, 9, 0, 0);
+    eventDate = new Date(year + 1, month - 1, day, anchorHour, 0, 0);
   }
 
   const reminderDate = new Date(eventDate);
