@@ -8,24 +8,30 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#0a0a0a",
+    theme_color: "#7c3aed",
     orientation: "portrait",
+    categories: ["lifestyle", "utilities"],
     icons: [
       {
-        src: "/icons/icon-192.svg",
+        src: "/icons/icon-192.png",
         sizes: "192x192",
-        type: "image/svg+xml",
+        type: "image/png",
       },
       {
-        src: "/icons/icon-512.svg",
+        src: "/icons/icon-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
       },
       {
-        src: "/icons/icon-512.svg",
+        src: "/icons/icon-maskable-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "maskable",
+      },
+      {
+        src: "/icons/icon-192.svg",
+        sizes: "any",
+        type: "image/svg+xml",
       },
     ],
   };
