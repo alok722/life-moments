@@ -6,11 +6,6 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <g fill="white" transform="translate(64,128)">
-    <!-- L -->
-    <path d="M0 0h48v186h80v44H0z"/>
-    <!-- M -->
-    <path d="M148 0h58l42 122 42-122h58v230h-46V78l-40 108h-28L194 78v152h-46z"/>
-  </g>
-  <circle cx="420" cy="106" r="36" fill="#34d399" opacity="0.9"/>
+  <text x="256" y="310" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="240" fill="white" letter-spacing="-8">LM</text>
+  <circle cx="420" cy="100" r="34" fill="#34d399" opacity="0.9"/>
 </svg>

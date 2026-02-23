@@ -20,7 +20,7 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-gradient-to-b from-background to-violet-50/50 dark:to-violet-950/10">
       <MobileNav userEmail={user.email ?? ""} />
-      <main className="flex-1 px-4 pb-24 pt-4">{children}</main>
+      <main className="flex-1 px-4 pb-8 pt-4">{children}</main>
       <BottomAddButton />
     </div>
   );

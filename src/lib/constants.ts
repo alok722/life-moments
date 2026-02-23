@@ -22,6 +22,8 @@ export const REMINDER_OFFSETS = [
 ] as const;
 
 export const RELATIONS = [
+  { value: "Parents", label: "Parents" },
+  { value: "Parent-In-Law", label: "Parent-In-Law" },
   { value: "Mother", label: "Mother" },
   { value: "Father", label: "Father" },
   { value: "Sister", label: "Sister" },
@@ -37,8 +39,18 @@ export const RELATIONS = [
 ] as const;
 
 export const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ] as const;
 
 export const EVENT_TYPE_ICONS: Record<string, string> = {

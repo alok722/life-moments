@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { HelpCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +28,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { WishGenerator } from "./wish-generator";
 
@@ -55,7 +60,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
       relation: reminder?.relation ?? undefined,
       event_month: reminder?.event_month ?? undefined,
       event_day: reminder?.event_day ?? undefined,
-      reminder_offset: reminder?.reminder_offset ?? undefined,
+      reminder_offset: reminder?.reminder_offset ?? "4h",
       recurrence_type: reminder?.recurrence_type ?? "yearly",
       notes: reminder?.notes ?? "",
     },
@@ -150,56 +155,56 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
             )}
           </div>
 
-          {/* Event Type */}
-          <div className="grid gap-2">
-            <Label>Event Type</Label>
-            <Select
-              value={eventType}
-              onValueChange={(val) =>
-                setValue("event_type", val as ReminderFormData["event_type"], {
-                  shouldValidate: true,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {EVENT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.event_type && (
-              <p className="text-xs text-destructive">
-                {errors.event_type.message}
-              </p>
-            )}
+          {/* Event Type & Relation */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label>Event Type</Label>
+              <Select
+                value={eventType}
+                onValueChange={(val) =>
+                  setValue("event_type", val as ReminderFormData["event_type"], {
+                    shouldValidate: true,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.event_type && (
+                <p className="text-xs text-destructive">
+                  {errors.event_type.message}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label>Relation</Label>
+              <Select
+                value={watch("relation") ?? undefined}
+                onValueChange={(val) => setValue("relation", val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select relation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RELATIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Relation */}
-          <div className="grid gap-2">
-            <Label>Relation</Label>
-            <Select
-              value={watch("relation") ?? undefined}
-              onValueChange={(val) => setValue("relation", val)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select relation" />
-              </SelectTrigger>
-              <SelectContent>
-                {RELATIONS.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Event Month & Day */}
+          {/* Month & Day */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label>Month</Label>
@@ -229,26 +234,15 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               )}
             </div>
             <div className="grid gap-2">
-              <Label>Day</Label>
-              <Select
-                value={eventDay?.toString()}
-                onValueChange={(val) =>
-                  setValue("event_day", parseInt(val), {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: maxDays }, (_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="event_day">Day</Label>
+              <Input
+                id="event_day"
+                type="number"
+                min={1}
+                max={maxDays}
+                placeholder="1"
+                {...register("event_day", { valueAsNumber: true })}
+              />
               {errors.event_day && (
                 <p className="text-xs text-destructive">
                   {errors.event_day.message}
@@ -257,66 +251,76 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
             </div>
           </div>
 
-          {/* Reminder Offset */}
-          <div className="grid gap-2">
-            <Label>Remind Me</Label>
-            <Select
-              value={watch("reminder_offset")}
-              onValueChange={(val) =>
-                setValue(
-                  "reminder_offset",
-                  val as ReminderFormData["reminder_offset"],
-                  { shouldValidate: true }
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="When to remind" />
-              </SelectTrigger>
-              <SelectContent>
-                {REMINDER_OFFSETS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.reminder_offset && (
-              <p className="text-xs text-destructive">
-                {errors.reminder_offset.message}
-              </p>
-            )}
-          </div>
-
-          {/* Recurrence */}
-          <div className="grid gap-2">
-            <Label>Repeats</Label>
-            <Select
-              value={watch("recurrence_type")}
-              onValueChange={(val) =>
-                setValue(
-                  "recurrence_type",
-                  val as ReminderFormData["recurrence_type"],
-                  { shouldValidate: true }
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="How often" />
-              </SelectTrigger>
-              <SelectContent>
-                {RECURRENCE_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.recurrence_type && (
-              <p className="text-xs text-destructive">
-                {errors.recurrence_type.message}
-              </p>
-            )}
+          {/* Remind Me & Repeats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <div className="flex items-center gap-1.5">
+                <Label>Remind Me</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px]">
+                    <p>Choose when to receive an email reminder before the event. For example, &ldquo;4 hours before&rdquo; sends the notification 4 hours before midnight on the event day.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Select
+                value={watch("reminder_offset")}
+                onValueChange={(val) =>
+                  setValue(
+                    "reminder_offset",
+                    val as ReminderFormData["reminder_offset"],
+                    { shouldValidate: true }
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="When to remind" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REMINDER_OFFSETS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.reminder_offset && (
+                <p className="text-xs text-destructive">
+                  {errors.reminder_offset.message}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label>Repeats</Label>
+              <Select
+                value={watch("recurrence_type")}
+                onValueChange={(val) =>
+                  setValue(
+                    "recurrence_type",
+                    val as ReminderFormData["recurrence_type"],
+                    { shouldValidate: true }
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="How often" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECURRENCE_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.recurrence_type && (
+                <p className="text-xs text-destructive">
+                  {errors.recurrence_type.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
