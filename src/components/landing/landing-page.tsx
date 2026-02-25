@@ -211,21 +211,6 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
                 See Features
               </a>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full border-border/60 sm:w-auto"
-            >
-              <a
-                href={GITHUB_REPO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="mr-2 h-4 w-4" />
-                Star on GitHub
-              </a>
-            </Button>
           </motion.div>
 
           <motion.p
