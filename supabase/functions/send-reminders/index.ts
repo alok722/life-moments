@@ -166,11 +166,33 @@ Deno.serve(async () => {
 
     for (const reminder of reminders as Reminder[]) {
       try {
+        // Atomically mark as sent to prevent duplicate processing
+        // Only update if email_sent is still false (prevents race conditions)
+        const { data: updated, error: updateError } = await supabase
+          .from("reminders")
+          .update({ email_sent: true })
+          .eq("id", reminder.id)
+          .eq("email_sent", false)
+          .select()
+          .single();
+
+        // If update failed (already processed by another instance), skip
+        if (updateError || !updated) {
+          continue;
+        }
+
         const {
           data: { user },
         } = await supabase.auth.admin.getUserById(reminder.user_id);
 
-        if (!user?.email) continue;
+        if (!user?.email) {
+          // Reset email_sent if we can't send
+          await supabase
+            .from("reminders")
+            .update({ email_sent: false })
+            .eq("id", reminder.id);
+          continue;
+        }
 
         const wish = await generateWish(
           reminder.event_type,
@@ -220,6 +242,11 @@ Deno.serve(async () => {
         sentCount++;
       } catch (err) {
         console.error(`Failed to process reminder ${reminder.id}:`, err);
+        // Reset email_sent on error so it can be retried
+        await supabase
+          .from("reminders")
+          .update({ email_sent: false })
+          .eq("id", reminder.id);
       }
     }
 

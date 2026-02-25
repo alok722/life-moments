@@ -12,16 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { EventType, Reminder } from "@/types/reminder";
 import { toast } from "sonner";
 
-function getNextOccurrence(r: Reminder): Date {
-  const now = new Date();
-  const thisYear = now.getFullYear();
-  let d = new Date(thisYear, r.event_month - 1, r.event_day);
-  if (d < now) {
-    d = new Date(thisYear + 1, r.event_month - 1, r.event_day);
-  }
-  return d;
-}
-
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -57,8 +47,9 @@ export function ReminderList() {
   const dueToday = useMemo(
     () =>
       filtered.filter((r) => {
-        const next = getNextOccurrence(r);
-        return isSameDay(next, today);
+        // Check if next_reminder_at is today (works for all recurrence types)
+        const nextReminderAt = new Date(r.next_reminder_at);
+        return isSameDay(nextReminderAt, today);
       }),
     [filtered, today]
   );
@@ -66,8 +57,9 @@ export function ReminderList() {
   const thisWeek = useMemo(
     () =>
       filtered.filter((r) => {
-        const next = getNextOccurrence(r);
-        return !isSameDay(next, today) && isWithinDays(next, today, 7);
+        // Check if next_reminder_at is within the next 7 days (but not today)
+        const nextReminderAt = new Date(r.next_reminder_at);
+        return !isSameDay(nextReminderAt, today) && isWithinDays(nextReminderAt, today, 7);
       }),
     [filtered, today]
   );
@@ -75,11 +67,12 @@ export function ReminderList() {
   const thisMonth = useMemo(
     () =>
       filtered.filter((r) => {
-        const next = getNextOccurrence(r);
+        // Check if next_reminder_at is within the next 31 days (but not today or this week)
+        const nextReminderAt = new Date(r.next_reminder_at);
         return (
-          !isSameDay(next, today) &&
-          !isWithinDays(next, today, 7) &&
-          isWithinDays(next, today, 31)
+          !isSameDay(nextReminderAt, today) &&
+          !isWithinDays(nextReminderAt, today, 7) &&
+          isWithinDays(nextReminderAt, today, 31)
         );
       }),
     [filtered, today]
