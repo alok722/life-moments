@@ -7,11 +7,13 @@ import {
   CalendarHeart,
   Clock,
   Gift,
+  Github,
   Heart,
   Mail,
   Repeat,
   Shield,
   Sparkles,
+  Star,
   Users,
   Zap,
 } from "lucide-react";
@@ -83,6 +85,8 @@ const eventTypes = [
   { icon: "📌", label: "Custom Events", color: "from-emerald-500 to-teal-500" },
 ];
 
+const GITHUB_REPO_URL = "https://github.com/alok722/life-moments";
+
 interface LandingPageProps {
   isLoggedIn: boolean;
 }
@@ -100,6 +104,15 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
             </span>
           </Link>
           <div className="flex items-center gap-2">
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-violet-300 hover:text-foreground dark:hover:border-violet-700"
+            >
+              <Star className="h-3.5 w-3.5" />
+              Star on GitHub
+            </a>
             <ThemeToggle />
             {isLoggedIn ? (
               <Button asChild size="sm" className="bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 dark:from-violet-500 dark:to-blue-400">
@@ -196,6 +209,21 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               <a href="#features">
                 <CalendarHeart className="mr-2 h-4 w-4" />
                 See Features
+              </a>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full border-border/60 sm:w-auto"
+            >
+              <a
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="mr-2 h-4 w-4" />
+                Star on GitHub
               </a>
             </Button>
           </motion.div>
@@ -483,10 +511,21 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               Life Moments
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Life Moments. All rights
-            reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="GitHub"
+            >
+              <Github className="h-4 w-4" />
+            </a>
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} Life Moments. All rights
+              reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
