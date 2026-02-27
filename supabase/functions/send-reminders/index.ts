@@ -57,7 +57,11 @@ async function generateWish(
   }
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(
+  recipients: { email: string }[],
+  subject: string,
+  html: string
+) {
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -67,7 +71,7 @@ async function sendEmail(to: string, subject: string, html: string) {
     },
     body: JSON.stringify({
       sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
-      to: [{ email: to }],
+      to: recipients,
       subject,
       htmlContent: html,
     }),
@@ -186,13 +190,25 @@ Deno.serve(async () => {
         } = await supabase.auth.admin.getUserById(reminder.user_id);
 
         if (!user?.email) {
-          // Reset email_sent if we can't send
           await supabase
             .from("reminders")
             .update({ email_sent: false })
             .eq("id", reminder.id);
           continue;
         }
+
+        const { data: extraRecipients } = await supabase
+          .from("notification_recipients")
+          .select("email")
+          .eq("user_id", reminder.user_id);
+
+        const allEmails = new Set([
+          user.email.toLowerCase(),
+          ...(extraRecipients ?? []).map((r: { email: string }) =>
+            r.email.toLowerCase()
+          ),
+        ]);
+        const recipients = [...allEmails].map((e) => ({ email: e }));
 
         const wish = await generateWish(
           reminder.event_type,
@@ -221,7 +237,7 @@ Deno.serve(async () => {
           </div>
         `;
 
-        await sendEmail(user.email, subject, html);
+        await sendEmail(recipients, subject, html);
 
         // Schedule next occurrence
         const nextReminderAt = computeNextReminderAt(

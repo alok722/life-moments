@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -35,6 +35,17 @@ export function MobileNav({ userEmail }: { userEmail: string }) {
             {userEmail}
           </span>
           <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            asChild
+          >
+            <Link href="/settings">
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Settings</span>
+            </Link>
+          </Button>
           <Button
             variant="ghost"
             size="icon"

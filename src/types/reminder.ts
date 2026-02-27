@@ -27,3 +27,10 @@ export type ReminderInsert = Omit<
 export type ReminderUpdate = Partial<
   Omit<Reminder, "id" | "user_id" | "created_at" | "updated_at">
 >;
+
+export interface NotificationRecipient {
+  id: string;
+  user_id: string;
+  email: string;
+  created_at: string;
+}

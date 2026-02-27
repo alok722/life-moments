@@ -32,3 +32,7 @@ export const generateWishSchema = z.object({
 });
 
 export type GenerateWishInput = z.infer<typeof generateWishSchema>;
+
+export const recipientEmailSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
