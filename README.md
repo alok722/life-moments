@@ -15,6 +15,7 @@ An open-source, mobile-first reminder web app for tracking birthdays 🎂, anniv
 - **PWA** — Installable on iOS/Android with offline shell caching via service worker 📱
 - **Dark Mode** — System-aware theme toggle (light/dark) 🌙
 - **Mobile-First** — Optimized for 375px+ screens with swipe-to-delete and thumb-friendly layout 📲
+- **Shared Notifications** — Add up to 5 extra email recipients to receive all your reminder notifications 👨‍👩‍👧‍👦
 - **Floating Action Button** — Context-aware FAB for quick reminder creation ➕
 
 ## Tech Stack
@@ -115,11 +116,12 @@ This converts the source SVGs in `public/` into all required PNG/ICO formats usi
 src/
   app/
     (auth)/           # Login/signup pages + auth callback
-    (protected)/      # Dashboard + reminder CRUD (requires auth)
+    (protected)/      # Dashboard, settings + reminder CRUD (requires auth)
     api/              # API routes (AI wish generator)
   components/
     ui/               # shadcn/ui components
     reminders/        # Reminder-specific components (form, list, cards)
+    settings/         # Notification recipient management
     layout/           # Nav, FAB, theme toggle
     auth/             # Magic link form
     landing/          # Landing page
