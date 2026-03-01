@@ -5,10 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Compute the next occurrence of a month/day event, then subtract the
- * reminder offset to get the timestamp we should fire the reminder at.
- */
 export function computeNextReminderAt(
   month: number,
   day: number,

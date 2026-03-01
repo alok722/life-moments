@@ -108,15 +108,18 @@ function computeNextReminderAt(
       break;
     }
     case "monthly": {
-      eventDate = new Date(now.getFullYear(), now.getMonth() + 1, day, 0, 0, 0);
+      let nextMonth = now.getMonth() + 1;
+      let nextYear = now.getFullYear();
+      if (nextMonth > 11) {
+        nextMonth = 0;
+        nextYear++;
+      }
+      eventDate = new Date(nextYear, nextMonth, day, 0, 0, 0);
       break;
     }
     case "yearly":
     default: {
-      eventDate = new Date(now.getFullYear(), month - 1, day, 0, 0, 0);
-      if (eventDate <= now) {
-        eventDate = new Date(now.getFullYear() + 1, month - 1, day, 0, 0, 0);
-      }
+      eventDate = new Date(now.getFullYear() + 1, month - 1, day, 0, 0, 0);
       break;
     }
   }
@@ -197,10 +200,14 @@ Deno.serve(async () => {
           continue;
         }
 
-        const { data: extraRecipients } = await supabase
+        const { data: extraRecipients, error: recipientsError } = await supabase
           .from("notification_recipients")
           .select("email")
           .eq("user_id", reminder.user_id);
+
+        if (recipientsError) {
+          console.error(`Failed to fetch recipients for user ${reminder.user_id}:`, recipientsError);
+        }
 
         const allEmails = new Set([
           user.email.toLowerCase(),
@@ -209,6 +216,8 @@ Deno.serve(async () => {
           ),
         ]);
         const recipients = [...allEmails].map((e) => ({ email: e }));
+
+        console.log(`Sending reminder "${reminder.title}" to ${recipients.length} recipient(s):`, recipients.map(r => r.email).join(', '));
 
         const wish = await generateWish(
           reminder.event_type,
