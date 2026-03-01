@@ -1,15 +1,26 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
-const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL") || "noreply@life-moments.app";
+const BREVO_SENDER_EMAIL =
+  Deno.env.get("BREVO_SENDER_EMAIL") || "noreply@life-moments.app";
 const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") || "Life Moments";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GOOGLE_GEMINI_API_KEY = Deno.env.get("GOOGLE_GEMINI_API_KEY")!;
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 interface Reminder {
@@ -29,7 +40,7 @@ interface Reminder {
 async function generateWish(
   eventType: string,
   relation: string | null,
-  title: string
+  title: string,
 ): Promise<string> {
   try {
     if (eventType === "bill") return "";
@@ -45,7 +56,7 @@ async function generateWish(
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.8, maxOutputTokens: 200 },
         }),
-      }
+      },
     );
 
     if (!res.ok) return "";
@@ -60,7 +71,7 @@ async function generateWish(
 async function sendEmail(
   recipients: { email: string }[],
   subject: string,
-  html: string
+  html: string,
 ) {
   const payload = {
     sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
@@ -68,14 +79,14 @@ async function sendEmail(
     subject,
     htmlContent: html,
   };
-  
+
   console.log(`[sendEmail] Sending to Brevo API:`, {
     sender: payload.sender,
     to: payload.to,
     subject: payload.subject,
-    htmlLength: html.length
+    htmlLength: html.length,
   });
-  
+
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -86,7 +97,9 @@ async function sendEmail(
     body: JSON.stringify(payload),
   });
 
-  console.log(`[sendEmail] Brevo API response status: ${res.status} ${res.statusText}`);
+  console.log(
+    `[sendEmail] Brevo API response status: ${res.status} ${res.statusText}`,
+  );
 
   if (!res.ok) {
     const error = await res.text();
@@ -95,7 +108,7 @@ async function sendEmail(
   }
 
   const result = await res.json();
-  console.log(`[sendEmail] Brevo API success response:`, result);
+  console.log(`[sendEmail] Brevo API success response: `, result);
   return result;
 }
 
@@ -103,7 +116,7 @@ function computeNextReminderAt(
   month: number,
   day: number,
   offset: string,
-  recurrenceType: string
+  recurrenceType: string,
 ): string {
   const now = new Date();
   let eventDate: Date;
@@ -165,10 +178,10 @@ function computeNextReminderAt(
 Deno.serve(async () => {
   const executionId = crypto.randomUUID().slice(0, 8);
   const executionStart = new Date().toISOString();
-  
+
   console.log(`[${executionId}] ===== CRON EXECUTION START =====`);
   console.log(`[${executionId}] Execution time: ${executionStart}`);
-  
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -180,23 +193,31 @@ Deno.serve(async () => {
       .limit(50);
 
     if (fetchError) {
-      console.error(`[${executionId}] ERROR: Failed to fetch reminders:`, fetchError);
+      console.error(
+        `[${executionId}] ERROR: Failed to fetch reminders:`,
+        fetchError,
+      );
       throw new Error(`Failed to fetch reminders: ${fetchError.message}`);
     }
 
-    console.log(`[${executionId}] Found ${reminders?.length || 0} eligible reminders`);
-    
+    console.log(
+      `[${executionId}] Found ${reminders?.length || 0} eligible reminders`,
+    );
+
     if (reminders && reminders.length > 0) {
-      console.log(`[${executionId}] Reminder details:`, reminders.map(r => ({
-        id: r.id.slice(0, 8),
-        title: r.title,
-        next_reminder_at: r.next_reminder_at,
-        email_sent: r.email_sent,
-        recurrence_type: r.recurrence_type,
-        reminder_offset: r.reminder_offset,
-        event_month: r.event_month,
-        event_day: r.event_day
-      })));
+      console.log(
+        `[${executionId}] Reminder details:`,
+        reminders.map((r) => ({
+          id: r.id.slice(0, 8),
+          title: r.title,
+          next_reminder_at: r.next_reminder_at,
+          email_sent: r.email_sent,
+          recurrence_type: r.recurrence_type,
+          reminder_offset: r.reminder_offset,
+          event_month: r.event_month,
+          event_day: r.event_day,
+        })),
+      );
     }
 
     if (!reminders || reminders.length === 0) {
@@ -212,9 +233,13 @@ Deno.serve(async () => {
     for (const reminder of reminders as Reminder[]) {
       const reminderId = reminder.id.slice(0, 8);
       try {
-        console.log(`[${executionId}] [${reminderId}] Processing reminder: "${reminder.title}"`);
-        console.log(`[${executionId}] [${reminderId}] Current state - email_sent: ${reminder.email_sent}, next_reminder_at: ${reminder.next_reminder_at}`);
-        
+        console.log(
+          `[${executionId}] [${reminderId}] Processing reminder: "${reminder.title}"`,
+        );
+        console.log(
+          `[${executionId}] [${reminderId}] Current state - email_sent: ${reminder.email_sent}, next_reminder_at: ${reminder.next_reminder_at}`,
+        );
+
         // Atomically mark as sent to prevent duplicate processing
         // Only update if email_sent is still false (prevents race conditions)
         const { data: updated, error: updateError } = await supabase
@@ -227,27 +252,36 @@ Deno.serve(async () => {
 
         // If update failed (already processed by another instance), skip
         if (updateError || !updated) {
-          console.log(`[${executionId}] [${reminderId}] SKIPPED: Already processed by another instance or update failed`, { updateError: updateError?.message });
+          console.log(
+            `[${executionId}] [${reminderId}] SKIPPED: Already processed by another instance or update failed`,
+            { updateError: updateError?.message },
+          );
           skippedCount++;
           continue;
         }
-        
-        console.log(`[${executionId}] [${reminderId}] Successfully marked as sent (atomic update)`);
+
+        console.log(
+          `[${executionId}] [${reminderId}] Successfully marked as sent (atomic update)`,
+        );
 
         const {
           data: { user },
         } = await supabase.auth.admin.getUserById(reminder.user_id);
 
         if (!user?.email) {
-          console.error(`[${executionId}] [${reminderId}] ERROR: User not found or no email for user_id: ${reminder.user_id}`);
+          console.error(
+            `[${executionId}] [${reminderId}] ERROR: User not found or no email for user_id: ${reminder.user_id}`,
+          );
           await supabase
             .from("reminders")
             .update({ email_sent: false })
             .eq("id", reminder.id);
           continue;
         }
-        
-        console.log(`[${executionId}] [${reminderId}] User found: ${user.email}`);
+
+        console.log(
+          `[${executionId}] [${reminderId}] User found: ${user.email}`,
+        );
 
         const { data: extraRecipients, error: recipientsError } = await supabase
           .from("notification_recipients")
@@ -255,30 +289,40 @@ Deno.serve(async () => {
           .eq("user_id", reminder.user_id);
 
         if (recipientsError) {
-          console.error(`[${executionId}] [${reminderId}] ERROR: Failed to fetch recipients for user ${reminder.user_id}:`, recipientsError);
+          console.error(
+            `[${executionId}] [${reminderId}] ERROR: Failed to fetch recipients for user ${reminder.user_id}:`,
+            recipientsError,
+          );
         }
-        
-        console.log(`[${executionId}] [${reminderId}] Extra recipients found: ${extraRecipients?.length || 0}`, extraRecipients?.map(r => r.email));
+
+        console.log(
+          `[${executionId}] [${reminderId}] Extra recipients found: ${extraRecipients?.length || 0}`,
+          extraRecipients?.map((r) => r.email),
+        );
 
         const allEmails = new Set([
           user.email.toLowerCase(),
           ...(extraRecipients ?? []).map((r: { email: string }) =>
-            r.email.toLowerCase()
+            r.email.toLowerCase(),
           ),
         ]);
         const recipients = [...allEmails].map((e) => ({ email: e }));
 
-        console.log(`[${executionId}] [${reminderId}] Total recipients (after dedup): ${recipients.length} - [${recipients.map(r => r.email).join(', ')}]`);
+        console.log(
+          `[${executionId}] [${reminderId}] Total recipients (after dedup): ${recipients.length} - [${recipients.map((r) => r.email).join(", ")}]`,
+        );
 
         console.log(`[${executionId}] [${reminderId}] Generating AI wish...`);
         const wish = await generateWish(
           reminder.event_type,
           reminder.relation,
-          reminder.title
+          reminder.title,
         );
-        
+
         if (wish) {
-          console.log(`[${executionId}] [${reminderId}] AI wish generated (${wish.length} chars)`);
+          console.log(
+            `[${executionId}] [${reminderId}] AI wish generated (${wish.length} chars)`,
+          );
         } else {
           console.log(`[${executionId}] [${reminderId}] No AI wish generated`);
         }
@@ -294,19 +338,27 @@ Deno.serve(async () => {
               ${reminder.relation ? `<p style="color: #6b7280; margin: 4px 0;">For: ${reminder.relation}</p>` : ""}
               <p style="color: #6b7280; margin: 4px 0;">Date: ${eventDateStr}</p>
             </div>
-            ${wish ? `
+            ${
+              wish
+                ? `
             <div style="background: #fefce8; border-radius: 12px; padding: 20px; margin: 16px 0; border-left: 4px solid #eab308;">
               <p style="margin: 0 0 4px; font-weight: 600; color: #854d0e;">Suggested Wish</p>
               <p style="margin: 0; color: #713f12; font-style: italic;">${wish}</p>
             </div>
-            ` : ""}
+            `
+                : ""
+            }
             <p style="color: #9ca3af; font-size: 12px;">Sent by Life Moments</p>
           </div>
         `;
 
-        console.log(`[${executionId}] [${reminderId}] Sending email via Brevo...`);
+        console.log(
+          `[${executionId}] [${reminderId}] Sending email via Brevo...`,
+        );
         await sendEmail(recipients, subject, html);
-        console.log(`[${executionId}] [${reminderId}] ✓ Email sent successfully to ${recipients.length} recipient(s)`);
+        console.log(
+          `[${executionId}] [${reminderId}] ✓ Email sent successfully to ${recipients.length} recipient(s)`,
+        );
 
         // Schedule next occurrence
         const oldNextReminderAt = reminder.next_reminder_at;
@@ -314,13 +366,21 @@ Deno.serve(async () => {
           reminder.event_month,
           reminder.event_day,
           reminder.reminder_offset,
-          reminder.recurrence_type
+          reminder.recurrence_type,
         );
-        
-        console.log(`[${executionId}] [${reminderId}] Scheduling next occurrence:`);
-        console.log(`[${executionId}] [${reminderId}]   - Old next_reminder_at: ${oldNextReminderAt}`);
-        console.log(`[${executionId}] [${reminderId}]   - New next_reminder_at: ${nextReminderAt}`);
-        console.log(`[${executionId}] [${reminderId}]   - Recurrence: ${reminder.recurrence_type}, Offset: ${reminder.reminder_offset}`);
+
+        console.log(
+          `[${executionId}] [${reminderId}] Scheduling next occurrence:`,
+        );
+        console.log(
+          `[${executionId}] [${reminderId}]   - Old next_reminder_at: ${oldNextReminderAt}`,
+        );
+        console.log(
+          `[${executionId}] [${reminderId}]   - New next_reminder_at: ${nextReminderAt}`,
+        );
+        console.log(
+          `[${executionId}] [${reminderId}]   - Recurrence: ${reminder.recurrence_type}, Offset: ${reminder.reminder_offset}`,
+        );
 
         await supabase
           .from("reminders")
@@ -329,41 +389,61 @@ Deno.serve(async () => {
             next_reminder_at: nextReminderAt,
           })
           .eq("id", reminder.id);
-        
-        console.log(`[${executionId}] [${reminderId}] ✓ Reminder updated for next cycle`);
+
+        console.log(
+          `[${executionId}] [${reminderId}] ✓ Reminder updated for next cycle`,
+        );
 
         sentCount++;
       } catch (err) {
         const reminderId = reminder.id.slice(0, 8);
-        console.error(`[${executionId}] [${reminderId}] ERROR: Failed to process reminder:`, err);
+        console.error(
+          `[${executionId}] [${reminderId}] ERROR: Failed to process reminder:`,
+          err,
+        );
         console.error(`[${executionId}] [${reminderId}] Error details:`, {
           message: (err as Error).message,
-          stack: (err as Error).stack
+          stack: (err as Error).stack,
         });
         // Reset email_sent on error so it can be retried
         await supabase
           .from("reminders")
           .update({ email_sent: false })
           .eq("id", reminder.id);
-        console.log(`[${executionId}] [${reminderId}] Reset email_sent to false for retry`);
+        console.log(
+          `[${executionId}] [${reminderId}] Reset email_sent to false for retry`,
+        );
       }
     }
 
     console.log(`[${executionId}] ===== CRON EXECUTION END =====`);
-    console.log(`[${executionId}] Summary: Sent ${sentCount}, Skipped ${skippedCount}, Total processed ${sentCount + skippedCount}`);
-    
-    return new Response(JSON.stringify({ sent: sentCount, skipped: skippedCount, executionId, executionTime: executionStart }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    console.log(
+      `[${executionId}] Summary: Sent ${sentCount}, Skipped ${skippedCount}, Total processed ${sentCount + skippedCount}`,
+    );
+
+    return new Response(
+      JSON.stringify({
+        sent: sentCount,
+        skipped: skippedCount,
+        executionId,
+        executionTime: executionStart,
+      }),
+      {
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   } catch (err) {
     console.error(`[${executionId}] FATAL ERROR:`, err);
     console.error(`[${executionId}] Error details:`, {
       message: (err as Error).message,
-      stack: (err as Error).stack
+      stack: (err as Error).stack,
     });
-    return new Response(JSON.stringify({ error: (err as Error).message, executionId }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: (err as Error).message, executionId }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 });

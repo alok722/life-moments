@@ -70,6 +70,7 @@ export function WishGenerator({
     if (open && wishes.length === 0 && !loading) {
       generate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const copyToClipboard = (text: string) => {

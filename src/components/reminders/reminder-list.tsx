@@ -9,7 +9,7 @@ import { DeleteReminderDialog } from "./delete-reminder-dialog";
 import { SwipeActions } from "./swipe-actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { EventType, Reminder } from "@/types/reminder";
+import type { EventType } from "@/types/reminder";
 import { toast } from "sonner";
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -42,7 +42,7 @@ export function ReminderList() {
     });
   }, [reminders, search, activeType]);
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
 
   const dueToday = useMemo(
     () =>
@@ -51,7 +51,7 @@ export function ReminderList() {
         const nextReminderAt = new Date(r.next_reminder_at);
         return isSameDay(nextReminderAt, today);
       }),
-    [filtered, today]
+    [filtered, today],
   );
 
   const thisWeek = useMemo(
@@ -59,9 +59,12 @@ export function ReminderList() {
       filtered.filter((r) => {
         // Check if next_reminder_at is within the next 7 days (but not today)
         const nextReminderAt = new Date(r.next_reminder_at);
-        return !isSameDay(nextReminderAt, today) && isWithinDays(nextReminderAt, today, 7);
+        return (
+          !isSameDay(nextReminderAt, today) &&
+          isWithinDays(nextReminderAt, today, 7)
+        );
       }),
-    [filtered, today]
+    [filtered, today],
   );
 
   const thisMonth = useMemo(
@@ -75,7 +78,7 @@ export function ReminderList() {
           isWithinDays(nextReminderAt, today, 31)
         );
       }),
-    [filtered, today]
+    [filtered, today],
   );
 
   const handleDelete = async () => {

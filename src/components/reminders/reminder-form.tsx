@@ -68,7 +68,6 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
 
   const eventType = watch("event_type");
   const eventMonth = watch("event_month");
-  const eventDay = watch("event_day");
   const maxDays = eventMonth ? getDaysInMonth(eventMonth) : 31;
 
   const onSubmit = async (data: ReminderFormData) => {
@@ -82,7 +81,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
       const nextReminderAt = computeNextReminderAt(
         data.event_month,
         data.event_day,
-        data.reminder_offset
+        data.reminder_offset,
       );
 
       const payload = {
@@ -125,9 +124,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Something went wrong"
-      );
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -136,7 +133,9 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
   return (
     <Card className="border-border/60 shadow-lg shadow-violet-500/5">
       <CardHeader>
-        <CardTitle className="bg-gradient-to-r from-violet-700 to-blue-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-blue-300">{isEditing ? "Edit Reminder" : "New Reminder"}</CardTitle>
+        <CardTitle className="bg-gradient-to-r from-violet-700 to-blue-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-blue-300">
+          {isEditing ? "Edit Reminder" : "New Reminder"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
@@ -149,9 +148,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               {...register("title")}
             />
             {errors.title && (
-              <p className="text-xs text-destructive">
-                {errors.title.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.title.message}</p>
             )}
           </div>
 
@@ -162,9 +159,13 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               <Select
                 value={eventType}
                 onValueChange={(val) =>
-                  setValue("event_type", val as ReminderFormData["event_type"], {
-                    shouldValidate: true,
-                  })
+                  setValue(
+                    "event_type",
+                    val as ReminderFormData["event_type"],
+                    {
+                      shouldValidate: true,
+                    },
+                  )
                 }
               >
                 <SelectTrigger>
@@ -261,7 +262,11 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
                     <HelpCircle className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[260px]">
-                    <p>Choose when to receive an email reminder before the event. For example, &ldquo;4 hours before&rdquo; sends the notification 4 hours before midnight on the event day.</p>
+                    <p>
+                      Choose when to receive an email reminder before the event.
+                      For example, &ldquo;4 hours before&rdquo; sends the
+                      notification 4 hours before midnight on the event day.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -271,7 +276,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
                   setValue(
                     "reminder_offset",
                     val as ReminderFormData["reminder_offset"],
-                    { shouldValidate: true }
+                    { shouldValidate: true },
                   )
                 }
               >
@@ -300,7 +305,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
                   setValue(
                     "recurrence_type",
                     val as ReminderFormData["recurrence_type"],
-                    { shouldValidate: true }
+                    { shouldValidate: true },
                   )
                 }
               >
@@ -353,10 +358,12 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md shadow-violet-500/20 hover:from-violet-700 hover:to-blue-600 dark:from-violet-500 dark:to-blue-400 dark:hover:from-violet-600 dark:hover:to-blue-500">
-              {submitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 bg-gradient-to-r from-violet-600 to-blue-500 text-white shadow-md shadow-violet-500/20 hover:from-violet-700 hover:to-blue-600 dark:from-violet-500 dark:to-blue-400 dark:hover:from-violet-600 dark:hover:to-blue-500"
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Update" : "Create"}
             </Button>
           </div>
