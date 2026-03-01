@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Reminder } from "@/types/reminder";
 
@@ -9,7 +9,7 @@ export function useReminders() {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  const fetchReminders = useCallback(async () => {
+  const fetchReminders = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("reminders")
@@ -21,11 +21,12 @@ export function useReminders() {
       setReminders(data as Reminder[]);
     }
     setLoading(false);
-  }, [supabase]);
+  };
 
   useEffect(() => {
     fetchReminders();
-  }, [fetchReminders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const deleteReminder = async (id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id));
