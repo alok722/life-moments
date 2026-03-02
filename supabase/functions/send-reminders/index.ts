@@ -118,25 +118,29 @@ function computeNextReminderAt(
   offset: string,
   recurrenceType: string,
 ): string {
-  const now = new Date();
+  // Use IST timezone (UTC+5:30) for all date calculations
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowUTC = new Date();
+  const nowIST = new Date(nowUTC.getTime() + IST_OFFSET_MS);
+  
   let eventDate: Date;
 
   switch (recurrenceType) {
     case "daily": {
-      eventDate = new Date(now);
+      eventDate = new Date(nowIST);
       eventDate.setDate(eventDate.getDate() + 1);
       eventDate.setHours(0, 0, 0, 0);
       break;
     }
     case "weekly": {
-      eventDate = new Date(now);
+      eventDate = new Date(nowIST);
       eventDate.setDate(eventDate.getDate() + 7);
       eventDate.setHours(0, 0, 0, 0);
       break;
     }
     case "monthly": {
-      let nextMonth = now.getMonth() + 1;
-      let nextYear = now.getFullYear();
+      let nextMonth = nowIST.getMonth() + 1;
+      let nextYear = nowIST.getFullYear();
       if (nextMonth > 11) {
         nextMonth = 0;
         nextYear++;
@@ -146,7 +150,7 @@ function computeNextReminderAt(
     }
     case "yearly":
     default: {
-      eventDate = new Date(now.getFullYear() + 1, month - 1, day, 0, 0, 0);
+      eventDate = new Date(nowIST.getFullYear() + 1, month - 1, day, 0, 0, 0);
       break;
     }
   }
@@ -172,7 +176,9 @@ function computeNextReminderAt(
       break;
   }
 
-  return reminderDate.toISOString();
+  // Convert back to UTC for storage
+  const reminderDateUTC = new Date(reminderDate.getTime() - IST_OFFSET_MS);
+  return reminderDateUTC.toISOString();
 }
 
 Deno.serve(async () => {

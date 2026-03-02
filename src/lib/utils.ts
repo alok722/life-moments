@@ -10,12 +10,15 @@ export function computeNextReminderAt(
   day: number,
   offset: string
 ): string {
-  const now = new Date();
-  const year = now.getFullYear();
-
+  // Use IST timezone (UTC+5:30) for all date calculations
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowUTC = new Date();
+  const nowIST = new Date(nowUTC.getTime() + IST_OFFSET_MS);
+  
+  const year = nowIST.getFullYear();
   let eventDate = new Date(year, month - 1, day, 0, 0, 0);
 
-  if (eventDate <= now) {
+  if (eventDate <= nowIST) {
     eventDate = new Date(year + 1, month - 1, day, 0, 0, 0);
   }
 
@@ -41,7 +44,9 @@ export function computeNextReminderAt(
       break;
   }
 
-  return reminderDate.toISOString();
+  // Convert back to UTC for storage
+  const reminderDateUTC = new Date(reminderDate.getTime() - IST_OFFSET_MS);
+  return reminderDateUTC.toISOString();
 }
 
 export function getDaysInMonth(month: number): number {
