@@ -118,39 +118,31 @@ function computeNextReminderAt(
   offset: string,
   recurrenceType: string,
 ): string {
-  // Use IST timezone (UTC+5:30) for all date calculations
-  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
-  const nowUTC = new Date();
-  const nowIST = new Date(nowUTC.getTime() + IST_OFFSET_MS);
-  
+  const now = new Date();
   let eventDate: Date;
 
   switch (recurrenceType) {
     case "daily": {
-      eventDate = new Date(nowIST);
-      eventDate.setDate(eventDate.getDate() + 1);
-      eventDate.setHours(0, 0, 0, 0);
+      eventDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 18, 30, 0, 0));
       break;
     }
     case "weekly": {
-      eventDate = new Date(nowIST);
-      eventDate.setDate(eventDate.getDate() + 7);
-      eventDate.setHours(0, 0, 0, 0);
+      eventDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 7, 18, 30, 0, 0));
       break;
     }
     case "monthly": {
-      let nextMonth = nowIST.getMonth() + 1;
-      let nextYear = nowIST.getFullYear();
+      let nextMonth = now.getUTCMonth() + 1;
+      let nextYear = now.getUTCFullYear();
       if (nextMonth > 11) {
         nextMonth = 0;
         nextYear++;
       }
-      eventDate = new Date(nextYear, nextMonth, day, 0, 0, 0);
+      eventDate = new Date(Date.UTC(nextYear, nextMonth, day, 18, 30, 0, 0));
       break;
     }
     case "yearly":
     default: {
-      eventDate = new Date(nowIST.getFullYear() + 1, month - 1, day, 0, 0, 0);
+      eventDate = new Date(Date.UTC(now.getUTCFullYear() + 1, month - 1, day, 18, 30, 0, 0));
       break;
     }
   }
@@ -158,27 +150,25 @@ function computeNextReminderAt(
   const reminderDate = new Date(eventDate);
   switch (offset) {
     case "1h":
-      reminderDate.setHours(reminderDate.getHours() - 1);
+      reminderDate.setUTCHours(reminderDate.getUTCHours() - 1);
       break;
     case "4h":
-      reminderDate.setHours(reminderDate.getHours() - 4);
+      reminderDate.setUTCHours(reminderDate.getUTCHours() - 4);
       break;
     case "1d":
-      reminderDate.setDate(reminderDate.getDate() - 1);
+      reminderDate.setUTCDate(reminderDate.getUTCDate() - 1);
       break;
     case "2d":
-      reminderDate.setDate(reminderDate.getDate() - 2);
+      reminderDate.setUTCDate(reminderDate.getUTCDate() - 2);
       break;
     case "1w":
-      reminderDate.setDate(reminderDate.getDate() - 7);
+      reminderDate.setUTCDate(reminderDate.getUTCDate() - 7);
       break;
     case "same":
       break;
   }
 
-  // Convert back to UTC for storage
-  const reminderDateUTC = new Date(reminderDate.getTime() - IST_OFFSET_MS);
-  return reminderDateUTC.toISOString();
+  return reminderDate.toISOString();
 }
 
 Deno.serve(async () => {
