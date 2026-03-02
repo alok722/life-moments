@@ -5,44 +5,36 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+function applyOffset(eventMidnightUTC: number, offset: string): number {
+  switch (offset) {
+    case "1h": return eventMidnightUTC - 1 * 60 * 60 * 1000;
+    case "4h": return eventMidnightUTC - 4 * 60 * 60 * 1000;
+    case "1d": return eventMidnightUTC - 24 * 60 * 60 * 1000;
+    case "2d": return eventMidnightUTC - 2 * 24 * 60 * 60 * 1000;
+    case "1w": return eventMidnightUTC - 7 * 24 * 60 * 60 * 1000;
+    case "same":
+    default: return eventMidnightUTC;
+  }
+}
+
 export function computeNextReminderAt(
   month: number,
   day: number,
   offset: string
 ): string {
-  const now = new Date();
-  const year = now.getUTCFullYear();
+  const now = Date.now();
+  const nowIST = new Date(now + IST_OFFSET_MS);
+  const istYear = nowIST.getUTCFullYear();
 
-  // Set reminder at 18:30 UTC (midnight IST next day)
-  let eventDate = new Date(Date.UTC(year, month - 1, day, 18, 30, 0, 0));
+  let eventMidnight = Date.UTC(istYear, month - 1, day) - IST_OFFSET_MS;
 
-  if (eventDate <= now) {
-    eventDate = new Date(Date.UTC(year + 1, month - 1, day, 18, 30, 0, 0));
+  if (applyOffset(eventMidnight, offset) <= now) {
+    eventMidnight = Date.UTC(istYear + 1, month - 1, day) - IST_OFFSET_MS;
   }
 
-  const reminderDate = new Date(eventDate);
-
-  switch (offset) {
-    case "1h":
-      reminderDate.setUTCHours(reminderDate.getUTCHours() - 1);
-      break;
-    case "4h":
-      reminderDate.setUTCHours(reminderDate.getUTCHours() - 4);
-      break;
-    case "1d":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 1);
-      break;
-    case "2d":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 2);
-      break;
-    case "1w":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 7);
-      break;
-    case "same":
-      break;
-  }
-
-  return reminderDate.toISOString();
+  return new Date(applyOffset(eventMidnight, offset)).toISOString();
 }
 
 export function getDaysInMonth(month: number): number {

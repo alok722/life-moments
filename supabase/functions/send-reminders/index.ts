@@ -112,63 +112,64 @@ async function sendEmail(
   return result;
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+function applyOffset(eventMidnightUTC: number, offset: string): number {
+  switch (offset) {
+    case "1h": return eventMidnightUTC - 1 * 60 * 60 * 1000;
+    case "4h": return eventMidnightUTC - 4 * 60 * 60 * 1000;
+    case "1d": return eventMidnightUTC - 24 * 60 * 60 * 1000;
+    case "2d": return eventMidnightUTC - 2 * 24 * 60 * 60 * 1000;
+    case "1w": return eventMidnightUTC - 7 * 24 * 60 * 60 * 1000;
+    case "same":
+    default: return eventMidnightUTC;
+  }
+}
+
 function computeNextReminderAt(
   month: number,
   day: number,
   offset: string,
   recurrenceType: string,
 ): string {
-  const now = new Date();
-  let eventDate: Date;
+  const now = Date.now();
+  const nowIST = new Date(now + IST_OFFSET_MS);
+  const istYear = nowIST.getUTCFullYear();
+  const istMonth = nowIST.getUTCMonth();
+  const istDate = nowIST.getUTCDate();
+
+  let eventMidnight: number;
 
   switch (recurrenceType) {
     case "daily": {
-      eventDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 18, 30, 0, 0));
+      eventMidnight = Date.UTC(istYear, istMonth, istDate + 1) - IST_OFFSET_MS;
+      while (applyOffset(eventMidnight, offset) <= now) {
+        eventMidnight += 24 * 60 * 60 * 1000;
+      }
       break;
     }
     case "weekly": {
-      eventDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 7, 18, 30, 0, 0));
+      eventMidnight = Date.UTC(istYear, istMonth, istDate + 7) - IST_OFFSET_MS;
+      while (applyOffset(eventMidnight, offset) <= now) {
+        eventMidnight += 7 * 24 * 60 * 60 * 1000;
+      }
       break;
     }
     case "monthly": {
-      let nextMonth = now.getUTCMonth() + 1;
-      let nextYear = now.getUTCFullYear();
-      if (nextMonth > 11) {
-        nextMonth = 0;
-        nextYear++;
-      }
-      eventDate = new Date(Date.UTC(nextYear, nextMonth, day, 18, 30, 0, 0));
+      let m = istMonth + 1;
+      let y = istYear;
+      if (m > 11) { m = 0; y++; }
+      eventMidnight = Date.UTC(y, m, day) - IST_OFFSET_MS;
       break;
     }
     case "yearly":
     default: {
-      eventDate = new Date(Date.UTC(now.getUTCFullYear() + 1, month - 1, day, 18, 30, 0, 0));
+      eventMidnight = Date.UTC(istYear + 1, month - 1, day) - IST_OFFSET_MS;
       break;
     }
   }
 
-  const reminderDate = new Date(eventDate);
-  switch (offset) {
-    case "1h":
-      reminderDate.setUTCHours(reminderDate.getUTCHours() - 1);
-      break;
-    case "4h":
-      reminderDate.setUTCHours(reminderDate.getUTCHours() - 4);
-      break;
-    case "1d":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 1);
-      break;
-    case "2d":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 2);
-      break;
-    case "1w":
-      reminderDate.setUTCDate(reminderDate.getUTCDate() - 7);
-      break;
-    case "same":
-      break;
-  }
-
-  return reminderDate.toISOString();
+  return new Date(applyOffset(eventMidnight, offset)).toISOString();
 }
 
 Deno.serve(async () => {
