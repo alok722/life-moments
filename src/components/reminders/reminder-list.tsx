@@ -33,6 +33,19 @@ export function ReminderList() {
 
   const filtered = useMemo(() => {
     return reminders.filter((r) => {
+      if (r.completed_at) return false;
+      const matchesSearch =
+        !search ||
+        r.title.toLowerCase().includes(search.toLowerCase()) ||
+        r.relation?.toLowerCase().includes(search.toLowerCase());
+      const matchesType = activeType === "all" || r.event_type === activeType;
+      return matchesSearch && matchesType;
+    });
+  }, [reminders, search, activeType]);
+
+  const completed = useMemo(() => {
+    return reminders.filter((r) => {
+      if (!r.completed_at) return false;
       const matchesSearch =
         !search ||
         r.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -128,6 +141,9 @@ export function ReminderList() {
           <TabsTrigger value="month" className="flex-1">
             Month ({thisMonth.length})
           </TabsTrigger>
+          <TabsTrigger value="completed" className="flex-1">
+            Done ({completed.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-4 space-y-3">
@@ -171,6 +187,18 @@ export function ReminderList() {
             <EmptyState message="No reminders this month." />
           ) : (
             thisMonth.map((r) => (
+              <SwipeActions key={r.id} onDelete={() => setDeleteId(r.id)}>
+                <ReminderCard reminder={r} onDelete={setDeleteId} />
+              </SwipeActions>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="completed" className="mt-4 space-y-3">
+          {completed.length === 0 ? (
+            <EmptyState message="No completed reminders yet." />
+          ) : (
+            completed.map((r) => (
               <SwipeActions key={r.id} onDelete={() => setDeleteId(r.id)}>
                 <ReminderCard reminder={r} onDelete={setDeleteId} />
               </SwipeActions>

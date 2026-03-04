@@ -6,6 +6,7 @@ export const EVENT_TYPES = [
 ] as const;
 
 export const RECURRENCE_TYPES = [
+  { value: "once", label: "Once" },
   { value: "daily", label: "Daily" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },

@@ -180,6 +180,7 @@ Deno.serve(async () => {
       .select("*")
       .lte("next_reminder_at", new Date().toISOString())
       .eq("email_sent", false)
+      .is("completed_at", null)
       .limit(50);
 
     if (fetchError) {
@@ -281,21 +282,27 @@ Deno.serve(async () => {
 
         await sendEmail(recipients, subject, html);
 
-        // Schedule next occurrence
-        const nextReminderAt = computeNextReminderAt(
-          reminder.event_month,
-          reminder.event_day,
-          reminder.reminder_offset,
-          reminder.recurrence_type,
-        );
+        if (reminder.recurrence_type === "once") {
+          await supabase
+            .from("reminders")
+            .update({ completed_at: new Date().toISOString() })
+            .eq("id", reminder.id);
+        } else {
+          const nextReminderAt = computeNextReminderAt(
+            reminder.event_month,
+            reminder.event_day,
+            reminder.reminder_offset,
+            reminder.recurrence_type,
+          );
 
-        await supabase
-          .from("reminders")
-          .update({
-            email_sent: false,
-            next_reminder_at: nextReminderAt,
-          })
-          .eq("id", reminder.id);
+          await supabase
+            .from("reminders")
+            .update({
+              email_sent: false,
+              next_reminder_at: nextReminderAt,
+            })
+            .eq("id", reminder.id);
+        }
 
         sentCount++;
       } catch (err) {

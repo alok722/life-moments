@@ -17,7 +17,7 @@ export const reminderSchema = z.object({
   reminder_offset: z.enum(["1h", "4h", "1d", "2d", "1w", "same"], {
     message: "Select when to remind",
   }),
-  recurrence_type: z.enum(["daily", "weekly", "monthly", "yearly"], {
+  recurrence_type: z.enum(["once", "daily", "weekly", "monthly", "yearly"], {
     message: "Select recurrence",
   }),
   notes: z.string().max(500).optional().nullable(),

@@ -1,5 +1,5 @@
 export type EventType = "birthday" | "anniversary" | "bill" | "custom";
-export type RecurrenceType = "daily" | "weekly" | "monthly" | "yearly";
+export type RecurrenceType = "once" | "daily" | "weekly" | "monthly" | "yearly";
 export type ReminderOffset = "1h" | "4h" | "1d" | "2d" | "1w" | "same";
 
 export interface Reminder {
@@ -15,6 +15,7 @@ export interface Reminder {
   notes: string | null;
   email_sent: boolean;
   next_reminder_at: string;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 }

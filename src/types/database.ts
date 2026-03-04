@@ -23,6 +23,7 @@ export interface Database {
           notes: string | null;
           email_sent: boolean;
           next_reminder_at: string;
+          completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -39,6 +40,7 @@ export interface Database {
           notes?: string | null;
           email_sent?: boolean;
           next_reminder_at: string;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -55,6 +57,7 @@ export interface Database {
           notes?: string | null;
           email_sent?: boolean;
           next_reminder_at?: string;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
