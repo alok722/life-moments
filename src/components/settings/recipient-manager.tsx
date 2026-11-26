@@ -21,24 +21,25 @@ export function RecipientManager() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRecipients();
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("notification_recipients")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      if (error) {
+        toast.error("Failed to load recipients");
+      } else {
+        setRecipients((data as NotificationRecipient[]) ?? []);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function fetchRecipients() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("notification_recipients")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      toast.error("Failed to load recipients");
-    } else {
-      setRecipients((data as NotificationRecipient[]) ?? []);
-    }
-    setLoading(false);
-  }
 
   async function handleAdd() {
     const result = recipientEmailSchema.safeParse({ email: email.trim() });
@@ -79,6 +80,9 @@ export function RecipientManager() {
     if (error) {
       if (error.code === "23505") {
         toast.error("This email is already added");
+      } else if (error.code === "23514") {
+        // Enforced in the database (max recipients / email format)
+        toast.error(error.message || "Recipient not allowed");
       } else {
         toast.error("Failed to add recipient");
       }

@@ -69,9 +69,9 @@ Fill in your values:
 ### 3. Set up Supabase 🗄️
 
 1. Go to your Supabase project's SQL Editor
-2. Run `supabase/migrations/001_create_reminders.sql` to create the table, indexes, and RLS policies
+2. Run every file in `supabase/migrations/` in order (`001` … `006`), or `supabase db push`. `006_harden_sending.sql` adds the DB-enforced recipient cap, client write guards, send log and retry bookkeeping used by `send-reminders`
 3. Enable the `pg_net` and `pg_cron` extensions in the Supabase dashboard (Database > Extensions)
-4. Run the cron setup from `supabase/migrations/002_create_cron.sql` (update the URL and service role key)
+4. Run the cron setup from `supabase/migrations/002_create_cron.sql` (update the URL and service role key). `send-reminders` rejects calls without `Authorization: Bearer <service role key>` (or an `x-cron-secret` header matching the optional `CRON_SECRET` function secret)
 
 ### 4. Deploy Edge Functions ☁️
 
