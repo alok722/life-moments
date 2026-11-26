@@ -1,12 +1,16 @@
 import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/site";
 
-const ICON_VERSION = "v3";
+const ICON_VERSION = "v4";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Life Moments",
-    short_name: "Life Moments",
-    description: "Never miss a moment that matters.",
+    id: "/",
+    name: siteConfig.name,
+    short_name: siteConfig.name,
+    description: siteConfig.description,
+    scope: "/",
+    lang: "en",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#ffffff",

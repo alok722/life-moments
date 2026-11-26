@@ -1,4 +1,4 @@
-const CACHE_NAME = "life-moments-v3";
+const CACHE_NAME = "life-moments-v4";
 const OFFLINE_URL = "/login";
 
 self.addEventListener("install", (event) => {

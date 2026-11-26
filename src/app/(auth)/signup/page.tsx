@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MagicLinkForm } from "@/components/auth/magic-link-form";
 import { Logo } from "@/components/ui/logo";
@@ -11,6 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Sign up free",
+  description:
+    "Create a free Life Moments account and never miss a birthday, anniversary or bill again.",
+  alternates: { canonical: "/signup" },
+};
 
 export default function SignupPage() {
   return (

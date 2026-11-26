@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MagicLinkForm } from "@/components/auth/magic-link-form";
 import { Logo } from "@/components/ui/logo";
@@ -11,6 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Log in to Life Moments with a magic link — no password needed.",
+  alternates: { canonical: "/login" },
+};
 
 export default function LoginPage() {
   return (

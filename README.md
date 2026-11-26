@@ -1,3 +1,5 @@
+<p align="center"><img src="public/logo.svg" alt="Life Moments" width="360"></p>
+
 # Life Moments
 
 > Never miss a moment that matters. ✨
@@ -62,6 +64,7 @@ Fill in your values:
 | `BREVO_API_KEY` | Your Brevo API key |
 | `BREVO_SENDER_EMAIL` | Verified sender email in Brevo |
 | `BREVO_SENDER_NAME` | Sender display name (e.g. `Life Moments`) |
+| `NEXT_PUBLIC_SITE_URL` | Public URL used for canonical links, Open Graph, `robots.txt` and `sitemap.xml` (falls back to the Vercel production URL) |
 
 ### 3. Set up Supabase 🗄️
 
@@ -101,7 +104,7 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run generate-icons
 ```
 
-This converts the source SVGs in `public/` into all required PNG/ICO formats using `sharp`.
+Builds every icon (favicon SVG/ICO/PNG, PWA icons, maskable icon, Apple touch icon, `public/logo.svg` lockup) from the single logo mark defined in the script, using `sharp`. Keep `src/components/ui/logo.tsx` in sync if you change the mark.
 
 ### 7. Deploy to Vercel 🌐
 
