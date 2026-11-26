@@ -4,7 +4,9 @@
 
 > Never miss a moment that matters. ✨
 
-An open-source, mobile-first reminder web app for tracking birthdays 🎂, anniversaries 💍, bills 📄, and custom events. Get smart email reminders with AI-generated wishes — all from a beautiful, installable PWA.
+**🌐 Live app: [mylifemoments.vercel.app](https://mylifemoments.vercel.app)**
+
+An open-source, mobile-first reminder web app for tracking birthdays 🎂, anniversaries 💍, bills 📄, and custom events. Get smart email reminders with AI-written messages for birthdays and anniversaries, plus an optional daily AI news digest — all from a beautiful, installable PWA.
 
 ## Features
 
