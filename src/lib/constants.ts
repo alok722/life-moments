@@ -3,6 +3,7 @@ export const EVENT_TYPES = [
   { value: "anniversary", label: "Anniversary" },
   { value: "bill", label: "Bill" },
   { value: "custom", label: "Custom" },
+  { value: "ai_news", label: "AI News" },
 ] as const;
 
 export const RECURRENCE_TYPES = [
@@ -59,4 +60,7 @@ export const EVENT_TYPE_ICONS: Record<string, string> = {
   anniversary: "💍",
   bill: "💳",
   custom: "📌",
+  ai_news: "📰",
 };
+
+export { supportsMessageIdeas } from "@/lib/messages";

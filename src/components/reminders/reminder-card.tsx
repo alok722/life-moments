@@ -4,7 +4,7 @@ import { CheckCircle2, Pencil, Repeat, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { Reminder } from "@/types/reminder";
-import { EVENT_TYPE_ICONS, MONTHS } from "@/lib/constants";
+import { EVENT_TYPE_ICONS, MONTHS, supportsMessageIdeas } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,15 @@ function isDueToday(month: number, day: number): boolean {
 
 export function ReminderCard({ reminder, onDelete }: ReminderCardProps) {
   const icon = EVENT_TYPE_ICONS[reminder.event_type] ?? "📌";
-  const dateLabel = getEventDateLabel(reminder.event_month, reminder.event_day);
-  const dueToday = isDueToday(reminder.event_month, reminder.event_day);
+  const isNews = reminder.event_type === "ai_news";
+  const dateLabel = isNews
+    ? "Every day · 7:00 AM IST"
+    : getEventDateLabel(reminder.event_month, reminder.event_day);
+  const dueToday = !isNews && isDueToday(reminder.event_month, reminder.event_day);
   const [wishOpen, setWishOpen] = useState(false);
   const isCompleted = !!reminder.completed_at;
 
-  const showWish = reminder.event_type !== "bill" && !isCompleted;
+  const showWish = supportsMessageIdeas(reminder.event_type) && !isCompleted;
 
   return (
     <>

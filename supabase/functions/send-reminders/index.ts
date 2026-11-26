@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { computeNextReminderAt } from "../_shared/schedule.ts";
+import { atMinutesFor, computeNextReminderAt } from "../_shared/schedule.ts";
+import { digestSubject, generateDigest, istDateKey, renderDigestEmail, type Digest } from "../_shared/news.ts";
 import { generateMessages, shareLinks, type MessageSuggestion } from "../_shared/messages.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
@@ -162,6 +163,7 @@ function nextScheduleFor(reminder: Reminder) {
         day: reminder.event_day,
         offset: reminder.reminder_offset,
         recurrence: reminder.recurrence_type,
+        atMinutes: atMinutesFor(reminder.event_type),
       },
       {
         // Continue the series from the occurrence just handled; always strictly later.
@@ -170,6 +172,29 @@ function nextScheduleFor(reminder: Reminder) {
       },
     ),
   };
+}
+
+/** Today's AI news digest: cached in news_digests so it's built once per IST day. */
+let digestInFlight: { date: string; promise: Promise<Digest> } | null = null;
+
+function getTodaysDigest(supabase: Supabase): Promise<Digest> {
+  const date = istDateKey();
+  if (digestInFlight?.date === date) return digestInFlight.promise;
+  const promise = (async () => {
+    const { data } = await supabase.from("news_digests").select("digest").eq("digest_date", date).maybeSingle();
+    const cached = data?.digest as Digest | undefined;
+    if (cached?.items?.length) return cached;
+    const digest = await generateDigest({ apiKey: GOOGLE_GEMINI_API_KEY });
+    if (digest.items.length > 0) {
+      await supabase
+        .from("news_digests")
+        .upsert({ digest_date: date, digest }, { onConflict: "digest_date", ignoreDuplicates: true });
+    }
+    return digest;
+  })();
+  digestInFlight = { date, promise };
+  promise.catch(() => (digestInFlight = null));
+  return promise;
 }
 
 /** Releases the claim and moves the reminder on to its next occurrence. */
@@ -260,18 +285,29 @@ async function processReminder(supabase: Supabase, candidate: Reminder): Promise
       ...new Set([user.email, ...(extra ?? []).map((r: { email: string }) => r.email)].map((e) => e.toLowerCase())),
     ].map((email) => ({ email }));
 
-    const { messages } = await generateMessages(
-      {
-        eventType: reminder.event_type,
-        relation: reminder.relation,
-        title: reminder.title,
-        notes: reminder.notes,
-      },
-      { apiKey: GOOGLE_GEMINI_API_KEY, timeoutMs: 10_000 },
-    );
-    const subject = `Reminder: ${reminder.title.replace(/[\r\n]+/g, " ")}`;
+    let subject: string;
+    let html: string;
+    if (reminder.event_type === "ai_news") {
+      const digest = await getTodaysDigest(supabase);
+      // No stories (all sources down): fail so it retries on the next run instead of sending an empty email.
+      if (digest.items.length === 0) throw new Error("AI news digest unavailable");
+      subject = digestSubject(digest);
+      html = renderDigestEmail(digest, { title: reminder.title });
+    } else {
+      const { messages } = await generateMessages(
+        {
+          eventType: reminder.event_type,
+          relation: reminder.relation,
+          title: reminder.title,
+          notes: reminder.notes,
+        },
+        { apiKey: GOOGLE_GEMINI_API_KEY, timeoutMs: 10_000 },
+      );
+      subject = `Reminder: ${reminder.title.replace(/[\r\n]+/g, " ")}`;
+      html = renderEmail(reminder, messages);
+    }
 
-    await sendEmail(recipients, subject, renderEmail(reminder, messages));
+    await sendEmail(recipients, subject, html);
     const sentAt = new Date().toISOString();
 
     await supabase

@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { shareLinks, type MessageSuggestion } from "@/lib/messages";
+import { supportsMessageIdeas } from "@/lib/constants";
 
 interface WishGeneratorProps {
   eventType: string;
@@ -51,7 +52,7 @@ export function WishGenerator({
     ? (v: boolean) => externalOnOpenChange?.(v)
     : setInternalOpen;
 
-  const enabled = !!eventType && eventType !== "bill";
+  const enabled = supportsMessageIdeas(eventType);
   const loading = open && enabled && result?.key !== requestKey;
   const messages = result?.messages ?? [];
 

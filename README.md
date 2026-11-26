@@ -12,7 +12,8 @@ An open-source, mobile-first reminder web app for tracking birthdays 🎂, anniv
 - **Smart Reminders** — Schedule notifications 1 hour to 1 week before events, or on the day ⏰
 - **Recurring Events** — Daily, weekly, monthly, or yearly recurrence 🔁
 - **Email Notifications** — Automated email reminders via Brevo (runs every 15 min via Supabase cron) 📧
-- **AI Message Ideas** — Gemini writes 3 ready-to-send messages per occasion, tuned to the relationship (heartfelt/playful for family & friends, professional for colleagues, respectful for in-laws) and personalised from your notes. They appear in the app and in every reminder email, with one-tap WhatsApp sharing — and fall back to hand-written templates if the AI is unavailable 🤖
+- **AI Message Ideas** — for birthdays and anniversaries, Gemini writes 3 ready-to-send messages tuned to the relationship (heartfelt/playful for family & friends, professional for colleagues, respectful for in-laws), personalised from your notes. Shown in the app and in the reminder email with one-tap WhatsApp sharing; falls back to hand-written templates if the AI is unavailable 🤖
+- **Daily AI News** — pick the "AI News" event type to get one email every morning at 7:00 AM IST with the day's top AI stories from Hacker News, TechCrunch, MIT Technology Review and The Verge, each with a short AI summary and link (built once per day and cached) 📰
 - **Relationship Tagging** — Tag reminders by relationship (Parent, Mother, Friend, Colleague, etc.) 👥
 - **PWA** — Installable on iOS/Android with offline shell caching via service worker 📱
 - **Dark Mode** — System-aware theme toggle (light/dark) 🌙
@@ -69,7 +70,7 @@ Fill in your values:
 ### 3. Set up Supabase 🗄️
 
 1. Go to your Supabase project's SQL Editor
-2. Run every file in `supabase/migrations/` in order (`001` … `007`), or `supabase db push`. `006_harden_sending.sql` adds the DB-enforced recipient cap, client write guards, send log and retry bookkeeping used by `send-reminders`
+2. Run every file in `supabase/migrations/` in order (`001` … `008`), or `supabase db push`. `006_harden_sending.sql` adds the DB-enforced recipient cap, client write guards, send log and retry bookkeeping used by `send-reminders`
 3. Enable the `pg_net` and `pg_cron` extensions in the Supabase dashboard (Database > Extensions)
 4. Run the cron setup from `supabase/migrations/002_create_cron.sql` (update the URL and service role key). `send-reminders` rejects calls without `Authorization: Bearer <service role key>` (or an `x-cron-secret` header matching the optional `CRON_SECRET` function secret)
 

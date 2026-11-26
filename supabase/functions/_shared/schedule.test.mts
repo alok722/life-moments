@@ -1,7 +1,7 @@
 // Run: npm test   (Node's built-in test runner; Node ≥22.18 strips TS types natively)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeNextReminderAt, type ScheduleRule } from "./schedule.ts";
+import { atMinutesFor, computeNextReminderAt, type ScheduleRule } from "./schedule.ts";
 
 /** UTC instant for a wall-clock time in IST. */
 const ist = (y: number, mo: number, d: number, h = 0, mi = 0) =>
@@ -96,4 +96,13 @@ test("always strictly in the future for every rule", () => {
         assert.ok(Date.parse(next(rule, t + 1, iso(t))) > t);
       }
   }
+});
+
+test("AI News: daily at 7:00 AM IST", () => {
+  const rule = { month: 1, day: 1, offset: "same", recurrence: "daily", atMinutes: atMinutesFor("ai_news") };
+  assert.equal(computeNextReminderAt(rule, { after: ist(2026, 11, 27, 2) }), iso(ist(2026, 11, 27, 7)));
+  assert.equal(computeNextReminderAt(rule, { after: ist(2026, 11, 27, 8) }), iso(ist(2026, 11, 28, 7)));
+  const sent = ist(2026, 11, 27, 7);
+  assert.equal(computeNextReminderAt(rule, { after: sent + 60_000, previousReminderAt: iso(sent) }), iso(ist(2026, 11, 28, 7)));
+  assert.equal(atMinutesFor("birthday"), 0);
 });

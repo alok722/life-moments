@@ -231,9 +231,16 @@ export interface GenerateOptions {
   fetchImpl?: typeof fetch;
 }
 
-/** AI suggestions with a template fallback; never throws. Bills get none. */
+/** Only personal occasions get message ideas (not bills, custom events or the news digest). */
+export const MESSAGE_EVENT_TYPES = ["birthday", "anniversary"] as const;
+
+export function supportsMessageIdeas(eventType?: string | null): boolean {
+  return (MESSAGE_EVENT_TYPES as readonly string[]).includes(eventType ?? "");
+}
+
+/** AI suggestions with a template fallback; never throws. Unsupported event types get none. */
 export async function generateMessages(ctx: MessageContext, opts: GenerateOptions = {}): Promise<MessageResult> {
-  if (ctx.eventType === "bill") return { messages: [], source: "fallback" };
+  if (!supportsMessageIdeas(ctx.eventType)) return { messages: [], source: "fallback" };
   const fallback = (): MessageResult => ({ messages: fallbackMessages(ctx), source: "fallback" });
   if (!opts.apiKey) return fallback();
 

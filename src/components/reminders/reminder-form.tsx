@@ -13,9 +13,10 @@ import {
   REMINDER_OFFSETS,
   RELATIONS,
   MONTHS,
+  supportsMessageIdeas,
 } from "@/lib/constants";
 import type { Reminder } from "@/types/reminder";
-import { computeNextReminderAt, maxDayForMonth } from "@/lib/schedule";
+import { atMinutesFor, computeNextReminderAt, maxDayForMonth } from "@/lib/schedule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
   });
 
   const eventType = watch("event_type");
+  const isNews = eventType === "ai_news";
   const eventMonth = watch("event_month");
   const maxDays = eventMonth ? maxDayForMonth(eventMonth) : 31;
 
@@ -83,6 +85,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
         day: data.event_day,
         offset: data.reminder_offset,
         recurrence: data.recurrence_type,
+        atMinutes: atMinutesFor(data.event_type),
       });
 
       const payload = {
@@ -159,15 +162,23 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               <Label>Event Type</Label>
               <Select
                 value={eventType}
-                onValueChange={(val) =>
-                  setValue(
-                    "event_type",
-                    val as ReminderFormData["event_type"],
-                    {
-                      shouldValidate: true,
-                    },
-                  )
-                }
+                onValueChange={(val) => {
+                  setValue("event_type", val as ReminderFormData["event_type"], {
+                    shouldValidate: true,
+                  });
+                  if (val === "ai_news") {
+                    // Daily digest at 7:00 AM IST — date, relation and offset don't apply.
+                    const todayIst = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+                    setValue("event_month", todayIst.getUTCMonth() + 1, { shouldValidate: true });
+                    setValue("event_day", todayIst.getUTCDate(), { shouldValidate: true });
+                    setValue("recurrence_type", "daily", { shouldValidate: true });
+                    setValue("reminder_offset", "same", { shouldValidate: true });
+                    setValue("relation", null);
+                    if (!watch("title")?.trim()) {
+                      setValue("title", "Daily AI News", { shouldValidate: true });
+                    }
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
@@ -186,6 +197,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
                 </p>
               )}
             </div>
+            {!isNews && (
             <div className="grid gap-2">
               <Label>Relation</Label>
               <Select
@@ -204,9 +216,19 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
                 </SelectContent>
               </Select>
             </div>
+            )}
           </div>
 
+          {isNews && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/30 dark:text-violet-200">
+              📰 Every morning at <strong>7:00 AM IST</strong> you&apos;ll get one email with the
+              day&apos;s top AI stories — picked from Hacker News, TechCrunch, MIT Technology Review
+              and The Verge, each with a short summary and link.
+            </div>
+          )}
+
           {/* Month & Day */}
+          {!isNews && (
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label>Month</Label>
@@ -252,8 +274,10 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               )}
             </div>
           </div>
+          )}
 
           {/* Remind Me & Repeats */}
+          {!isNews && (
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <div className="flex items-center gap-1.5">
@@ -328,6 +352,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               )}
             </div>
           </div>
+          )}
 
           {/* Notes */}
           <div className="grid gap-2">
@@ -341,7 +366,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
           </div>
 
           {/* AI Wish */}
-          {eventType && eventType !== "bill" && (
+          {supportsMessageIdeas(eventType) && (
             <WishGenerator
               eventType={eventType}
               relation={watch("relation") ?? undefined}

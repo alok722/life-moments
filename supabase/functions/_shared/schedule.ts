@@ -55,6 +55,13 @@ export interface ScheduleRule {
   day: number;
   offset: string;
   recurrence: string;
+  /** Minutes after 00:00 IST at which the event "happens" (default 0 = midnight). */
+  atMinutes?: number;
+}
+
+/** Event types delivered at a fixed time of day instead of midnight. */
+export function atMinutesFor(eventType?: string | null): number {
+  return eventType === "ai_news" ? 7 * 60 : 0; // AI News digest: 7:00 AM IST
 }
 
 export interface ScheduleOptions {
@@ -69,6 +76,20 @@ export interface ScheduleOptions {
 
 /** Epoch ms of the next event midnight (00:00 IST) whose reminder time is > `after`. */
 export function nextEventAt(rule: ScheduleRule, opts: ScheduleOptions = {}): number {
+  const shift = (rule.atMinutes ?? 0) * 60 * 1000;
+  if (shift) {
+    // Same calendar logic, evaluated on a timeline shifted by the time of day.
+    const prev = opts.previousReminderAt != null ? Date.parse(opts.previousReminderAt) : NaN;
+    return (
+      nextEventAt(
+        { ...rule, atMinutes: 0 },
+        {
+          after: (opts.after ?? Date.now()) - shift,
+          previousReminderAt: Number.isNaN(prev) ? null : new Date(prev - shift).toISOString(),
+        },
+      ) + shift
+    );
+  }
   const after = opts.after ?? Date.now();
   const off = offsetToMs(rule.offset);
   const firesAfter = (eventAt: number) => eventAt - off > after;

@@ -1,4 +1,4 @@
-export type EventType = "birthday" | "anniversary" | "bill" | "custom";
+export type EventType = "birthday" | "anniversary" | "bill" | "custom" | "ai_news";
 export type RecurrenceType = "once" | "daily" | "weekly" | "monthly" | "yearly";
 export type ReminderOffset = "1h" | "4h" | "1d" | "2d" | "1w" | "same";
 

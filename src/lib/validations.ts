@@ -8,7 +8,7 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const reminderSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
-  event_type: z.enum(["birthday", "anniversary", "bill", "custom"], {
+  event_type: z.enum(["birthday", "anniversary", "bill", "custom", "ai_news"], {
     message: "Select an event type",
   }),
   relation: z.string().max(50).optional().nullable(),
@@ -26,7 +26,8 @@ export const reminderSchema = z.object({
 export type ReminderFormData = z.infer<typeof reminderSchema>;
 
 export const generateWishSchema = z.object({
-  event_type: z.enum(["birthday", "anniversary", "bill", "custom"]),
+  // Message ideas are only offered for personal occasions.
+  event_type: z.enum(["birthday", "anniversary"]),
   relation: z.string().trim().max(50).optional(),
   title: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(500).optional(),

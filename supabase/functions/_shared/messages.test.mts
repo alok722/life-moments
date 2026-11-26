@@ -62,7 +62,6 @@ test("fallback always gives three tone-matched messages, no name for work", () =
   const boss = fallbackMessages({ eventType: "birthday", relation: "Boss", title: "Sharma Sir Birthday" });
   assert.equal(boss[0].tone, "professional");
   assert.doesNotMatch(boss.map((m) => m.text).join(" "), /Sharma/);
-  assert.equal(fallbackMessages({ eventType: "custom", title: "Graduation" }).length, 3);
 });
 
 test("generateMessages uses AI output when valid", async () => {
@@ -74,7 +73,7 @@ test("generateMessages uses AI output when valid", async () => {
   assert.equal(r.messages.length, 3);
 });
 
-test("generateMessages falls back on errors, junk, missing key; bills get nothing", async () => {
+test("generateMessages falls back on errors, junk, missing key; only birthday/anniversary get ideas", async () => {
   const ctx = { eventType: "birthday", relation: "Mother", title: "Mom's Birthday" };
   assert.equal((await generateMessages(ctx, { apiKey: "k", fetchImpl: geminiResponse({}, false) })).source, "fallback");
   assert.equal((await generateMessages(ctx, { apiKey: "k", fetchImpl: geminiResponse("garbage") })).source, "fallback");
@@ -82,7 +81,9 @@ test("generateMessages falls back on errors, junk, missing key; bills get nothin
   const noKey = await generateMessages(ctx, {});
   assert.equal(noKey.source, "fallback");
   assert.equal(noKey.messages.length, 3);
-  assert.deepEqual((await generateMessages({ eventType: "bill" }, { apiKey: "k" })).messages, []);
+  for (const eventType of ["bill", "custom", "ai_news"]) {
+    assert.deepEqual((await generateMessages({ eventType }, { apiKey: "k" })).messages, [], eventType);
+  }
 });
 
 test("share links encode the text", () => {
