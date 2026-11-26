@@ -346,6 +346,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
               eventType={eventType}
               relation={watch("relation") ?? undefined}
               title={watch("title")}
+              notes={watch("notes") ?? undefined}
             />
           )}
 

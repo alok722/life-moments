@@ -29,6 +29,7 @@ export const generateWishSchema = z.object({
   event_type: z.enum(["birthday", "anniversary", "bill", "custom"]),
   relation: z.string().trim().max(50).optional(),
   title: z.string().trim().max(100).optional(),
+  notes: z.string().trim().max(500).optional(),
 });
 
 export type GenerateWishInput = z.infer<typeof generateWishSchema>;
