@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { computeNextReminderAt } from "../_shared/schedule.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
 const BREVO_SENDER_EMAIL =
@@ -97,75 +98,6 @@ async function sendEmail(
 
   const result = await res.json();
   return result;
-}
-
-const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
-
-function applyOffset(eventMidnightUTC: number, offset: string): number {
-  switch (offset) {
-    case "1h":
-      return eventMidnightUTC - 1 * 60 * 60 * 1000;
-    case "4h":
-      return eventMidnightUTC - 4 * 60 * 60 * 1000;
-    case "1d":
-      return eventMidnightUTC - 24 * 60 * 60 * 1000;
-    case "2d":
-      return eventMidnightUTC - 2 * 24 * 60 * 60 * 1000;
-    case "1w":
-      return eventMidnightUTC - 7 * 24 * 60 * 60 * 1000;
-    case "same":
-    default:
-      return eventMidnightUTC;
-  }
-}
-
-function computeNextReminderAt(
-  month: number,
-  day: number,
-  offset: string,
-  recurrenceType: string,
-): string {
-  const now = Date.now();
-  const nowIST = new Date(now + IST_OFFSET_MS);
-  const istYear = nowIST.getUTCFullYear();
-  const istMonth = nowIST.getUTCMonth();
-  const istDate = nowIST.getUTCDate();
-
-  let eventMidnight: number;
-
-  switch (recurrenceType) {
-    case "daily": {
-      eventMidnight = Date.UTC(istYear, istMonth, istDate + 1) - IST_OFFSET_MS;
-      while (applyOffset(eventMidnight, offset) <= now) {
-        eventMidnight += 24 * 60 * 60 * 1000;
-      }
-      break;
-    }
-    case "weekly": {
-      eventMidnight = Date.UTC(istYear, istMonth, istDate + 7) - IST_OFFSET_MS;
-      while (applyOffset(eventMidnight, offset) <= now) {
-        eventMidnight += 7 * 24 * 60 * 60 * 1000;
-      }
-      break;
-    }
-    case "monthly": {
-      let m = istMonth + 1;
-      let y = istYear;
-      if (m > 11) {
-        m = 0;
-        y++;
-      }
-      eventMidnight = Date.UTC(y, m, day) - IST_OFFSET_MS;
-      break;
-    }
-    case "yearly":
-    default: {
-      eventMidnight = Date.UTC(istYear + 1, month - 1, day) - IST_OFFSET_MS;
-      break;
-    }
-  }
-
-  return new Date(applyOffset(eventMidnight, offset)).toISOString();
 }
 
 Deno.serve(async () => {
@@ -288,11 +220,18 @@ Deno.serve(async () => {
             .update({ completed_at: new Date().toISOString() })
             .eq("id", reminder.id);
         } else {
+          // Continue the series from the occurrence just sent; always strictly later.
           const nextReminderAt = computeNextReminderAt(
-            reminder.event_month,
-            reminder.event_day,
-            reminder.reminder_offset,
-            reminder.recurrence_type,
+            {
+              month: reminder.event_month,
+              day: reminder.event_day,
+              offset: reminder.reminder_offset,
+              recurrence: reminder.recurrence_type,
+            },
+            {
+              after: Math.max(Date.now(), Date.parse(reminder.next_reminder_at)),
+              previousReminderAt: reminder.next_reminder_at,
+            },
           );
 
           await supabase

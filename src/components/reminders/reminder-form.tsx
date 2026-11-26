@@ -15,7 +15,7 @@ import {
   MONTHS,
 } from "@/lib/constants";
 import type { Reminder } from "@/types/reminder";
-import { computeNextReminderAt, getDaysInMonth } from "@/lib/utils";
+import { computeNextReminderAt, maxDayForMonth } from "@/lib/schedule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +68,7 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
 
   const eventType = watch("event_type");
   const eventMonth = watch("event_month");
-  const maxDays = eventMonth ? getDaysInMonth(eventMonth) : 31;
+  const maxDays = eventMonth ? maxDayForMonth(eventMonth) : 31;
 
   const onSubmit = async (data: ReminderFormData) => {
     setSubmitting(true);
@@ -78,11 +78,12 @@ export function ReminderForm({ reminder }: ReminderFormProps) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const nextReminderAt = computeNextReminderAt(
-        data.event_month,
-        data.event_day,
-        data.reminder_offset,
-      );
+      const nextReminderAt = computeNextReminderAt({
+        month: data.event_month,
+        day: data.event_day,
+        offset: data.reminder_offset,
+        recurrence: data.recurrence_type,
+      });
 
       const payload = {
         title: data.title,
