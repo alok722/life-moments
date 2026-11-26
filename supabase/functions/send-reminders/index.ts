@@ -62,11 +62,26 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function isAuthorized(req: Request): boolean {
+async function isAuthorized(req: Request): Promise<boolean> {
   const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (bearer && timingSafeEqual(bearer, SUPABASE_SERVICE_ROLE_KEY)) return true;
+
   const secret = req.headers.get("x-cron-secret") ?? "";
-  return CRON_SECRET !== "" && timingSafeEqual(secret, CRON_SECRET);
+  if (CRON_SECRET !== "" && timingSafeEqual(secret, CRON_SECRET)) return true;
+
+  // Accept any other genuine secret key for this project (e.g. a new-style
+  // sb_secret_ key, or a rotated service_role JWT in the cron job): prove it
+  // by making an admin-only call with it. Anon/user tokens are rejected.
+  if (!bearer) return false;
+  try {
+    const probe = createClient(SUPABASE_URL, bearer, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await probe.auth.admin.listUsers({ page: 1, perPage: 1 });
+    return !error;
+  } catch {
+    return false;
+  }
 }
 
 async function generateWish(
@@ -297,7 +312,7 @@ async function runPool<T, R>(items: T[], limit: number, fn: (item: T) => Promise
 }
 
 Deno.serve(async (req) => {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
