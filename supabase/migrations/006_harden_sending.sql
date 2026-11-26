@@ -14,7 +14,7 @@ DELETE FROM public.notification_recipients a
 USING public.notification_recipients b
 WHERE a.user_id = b.user_id
   AND lower(a.email) = lower(b.email)
-  AND a.created_at > b.created_at;
+  AND (a.created_at, a.id) > (b.created_at, b.id);
 UPDATE public.notification_recipients SET email = lower(trim(email));
 
 ALTER TABLE public.notification_recipients
