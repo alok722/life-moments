@@ -1,32 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Reminder } from "@/types/reminder";
 
 export function useReminders() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
-  const fetchReminders = async () => {
+  const query = useCallback(
+    () =>
+      supabase
+        .from("reminders")
+        .select("*")
+        .order("event_month", { ascending: true })
+        .order("event_day", { ascending: true }),
+    [supabase]
+  );
+
+  const fetchReminders = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("reminders")
-      .select("*")
-      .order("event_month", { ascending: true })
-      .order("event_day", { ascending: true });
-
-    if (!error && data) {
-      setReminders(data as Reminder[]);
-    }
+    const { data, error } = await query();
+    if (!error && data) setReminders(data as Reminder[]);
     setLoading(false);
-  };
+  }, [query]);
 
   useEffect(() => {
-    fetchReminders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await query();
+      if (cancelled) return;
+      if (!error && data) setReminders(data as Reminder[]);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
 
   const deleteReminder = async (id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id));

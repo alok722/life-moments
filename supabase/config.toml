@@ -8,7 +8,6 @@ port = 54321
 port = 54322
 
 [functions.send-reminders]
+# Auth is checked inside the function (service role bearer or CRON_SECRET).
 verify_jwt = false
 
-[functions.generate-wish]
-verify_jwt = true

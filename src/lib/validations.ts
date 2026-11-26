@@ -11,7 +11,7 @@ export const reminderSchema = z.object({
   event_type: z.enum(["birthday", "anniversary", "bill", "custom"], {
     message: "Select an event type",
   }),
-  relation: z.string().optional().nullable(),
+  relation: z.string().max(50).optional().nullable(),
   event_month: z.number().min(1).max(12, "Select a month"),
   event_day: z.number().min(1).max(31, "Select a day"),
   reminder_offset: z.enum(["1h", "4h", "1d", "2d", "1w", "same"], {
@@ -27,8 +27,8 @@ export type ReminderFormData = z.infer<typeof reminderSchema>;
 
 export const generateWishSchema = z.object({
   event_type: z.enum(["birthday", "anniversary", "bill", "custom"]),
-  relation: z.string().optional(),
-  title: z.string(),
+  relation: z.string().trim().max(50).optional(),
+  title: z.string().trim().max(100).optional(),
 });
 
 export type GenerateWishInput = z.infer<typeof generateWishSchema>;

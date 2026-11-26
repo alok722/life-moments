@@ -30,9 +30,10 @@ export function WishGenerator({
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
 }: WishGeneratorProps) {
-  const [wishes, setWishes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [internalOpen, setInternalOpen] = useState(false);
+  // Each Regenerate bumps the key; a result is "fresh" when its key matches.
+  const [requestKey, setRequestKey] = useState(0);
+  const [result, setResult] = useState<{ key: number; wishes: string[] } | null>(null);
 
   const isControlled = externalOpen !== undefined;
   const open = isControlled ? externalOpen : internalOpen;
@@ -40,38 +41,47 @@ export function WishGenerator({
     ? (v: boolean) => externalOnOpenChange?.(v)
     : setInternalOpen;
 
-  const generate = async () => {
-    setLoading(true);
-    setWishes([]);
-
-    try {
-      const res = await fetch("/api/generate-wish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_type: eventType,
-          relation: relation || undefined,
-          title: title || undefined,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to generate");
-
-      const data = await res.json();
-      setWishes(data.wishes ?? []);
-    } catch {
-      toast.error("Could not generate wishes. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const enabled = !!eventType && eventType !== "bill";
+  const shouldFetch = open && enabled && result?.key !== requestKey;
+  const loading = shouldFetch;
+  const wishes = result?.wishes ?? [];
 
   useEffect(() => {
-    if (open && wishes.length === 0 && !loading) {
-      generate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+    if (!shouldFetch) return;
+    const controller = new AbortController();
+
+    (async () => {
+      let next: string[] = [];
+      try {
+        const res = await fetch("/api/generate-wish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_type: eventType,
+            relation: relation || undefined,
+            title: title || undefined,
+          }),
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok) {
+          next = Array.isArray(data?.wishes) ? data.wishes : [];
+        } else {
+          toast.error(
+            res.status === 429 && data?.error
+              ? data.error
+              : "Could not generate wishes. Try again."
+          );
+        }
+      } catch {
+        if (controller.signal.aborted) return;
+        toast.error("Could not generate wishes. Try again.");
+      }
+      if (!controller.signal.aborted) setResult({ key: requestKey, wishes: next });
+    })();
+
+    return () => controller.abort();
+  }, [shouldFetch, requestKey, eventType, relation, title]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -123,7 +133,7 @@ export function WishGenerator({
             type="button"
             variant="outline"
             className="w-full"
-            onClick={generate}
+            onClick={() => setRequestKey((k) => k + 1)}
           >
             <Sparkles className="mr-2 h-4 w-4" />
             Regenerate
