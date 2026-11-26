@@ -26,11 +26,15 @@ export async function POST(request: Request) {
     }
 
     const { data: allowed, error: quotaError } = await supabase.rpc("consume_wish_quota");
-    if (quotaError) {
+    // PGRST202 = function not found: migration 007 not applied yet → don't break the feature.
+    const quotaMissing = quotaError?.code === "PGRST202";
+    if (quotaError && !quotaMissing) {
       console.error("generate-wish quota error:", quotaError.message);
       return NextResponse.json({ error: "Failed to generate wishes" }, { status: 500 });
     }
-    if (!allowed) {
+    if (quotaMissing) {
+      console.warn("generate-wish: consume_wish_quota missing — apply migration 007 to enable rate limiting");
+    } else if (!allowed) {
       return NextResponse.json(
         { error: "You've generated a lot of wishes — please try again later." },
         { status: 429, headers: { "Retry-After": "3600" } }
