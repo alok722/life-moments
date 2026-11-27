@@ -1,6 +1,15 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { atMinutesFor, computeNextReminderAt } from "../_shared/schedule.ts";
-import { DIGEST_VERSION, digestSubject, generateDigest, istDateKey, renderDigestEmail, type Digest } from "../_shared/news.ts";
+import {
+  DIGEST_VERSION,
+  digestFailureSubject,
+  digestSubject,
+  generateDigest,
+  istDateKey,
+  renderDigestEmail,
+  renderDigestFailureEmail,
+  type Digest,
+} from "../_shared/news.ts";
 import { generateMessages, shareLinks, type MessageSuggestion } from "../_shared/messages.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
@@ -19,6 +28,7 @@ const CONCURRENCY = 5;
 const CLAIM_TTL_MS = 10 * 60 * 1000;
 /** After this many failed attempts an occurrence is skipped (recurring) or parked (once). */
 const MAX_ATTEMPTS = 5;
+const APP_URL = Deno.env.get("APP_URL") || "https://mylifemoments.vercel.app";
 /** Per-user cap on reminder emails in a rolling 24h window (anti-abuse). */
 const DAILY_SEND_CAP = 30;
 
@@ -288,8 +298,27 @@ async function processReminder(supabase: Supabase, candidate: Reminder): Promise
     let html: string;
     if (reminder.event_type === "ai_news") {
       const digest = await getTodaysDigest(supabase);
-      // No stories (all sources down): fail so it retries on the next run instead of sending an empty email.
-      if (digest.items.length === 0) throw new Error("AI news digest unavailable");
+      if (digest.items.length === 0) {
+        const reason = digest.error ?? "No stories available.";
+        const attempts = (reminder.attempts ?? 0) + 1;
+        // Not the last try: fail so it retries on the next run instead of sending an empty email.
+        if (attempts < MAX_ATTEMPTS) throw new Error(`AI news digest unavailable: ${reason}`);
+
+        // Last try: tell the account owner (only them) so it can be fixed, then skip today.
+        console.error(`[${tag}] AI news digest failed after ${attempts} attempts: ${reason}`);
+        try {
+          await sendEmail(
+            [{ email: user.email.toLowerCase() }],
+            digestFailureSubject(digest.date),
+            renderDigestFailureEmail({ date: digest.date, error: reason, attempts, appUrl: APP_URL }),
+          );
+          await supabase.from("email_sends").insert({ user_id: reminder.user_id, reminder_id: reminder.id, recipients: 1 });
+        } catch (alertErr) {
+          console.error(`[${tag}] Failed to send digest failure alert: ${(alertErr as Error).message}`);
+        }
+        await advance(supabase, reminder, { last_error: `Skipped after ${attempts} attempts (alert sent): ${reason}`.slice(0, 500) });
+        return "failed";
+      }
       subject = digestSubject(digest);
       html = renderDigestEmail(digest, { title: reminder.title });
     } else {

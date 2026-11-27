@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import {
   cleanDescription,
   DIGEST_VERSION,
+  digestFailureSubject,
   digestSubject,
   generateDigest,
   istDateKey,
   parseCobunDigest,
   renderDigestEmail,
+  renderDigestFailureEmail,
 } from "./news.ts";
 
 const NOW = Date.parse("2026-11-27T02:00:00Z");
@@ -143,4 +145,32 @@ test("email shows descriptions and why-it-matters, escapes content, credits Cobu
     renderDigestEmail({ version: DIGEST_VERSION, date: "2026-11-27", headline: "", items: [], source: "cobun" }),
     /back tomorrow/,
   );
+});
+
+test("failures carry a clear reason and never any items", async () => {
+  const cases: Array<[typeof fetch, RegExp]> = [
+    [(async () => new Response("", { status: 503, statusText: "Service Unavailable" })) as unknown as typeof fetch, /HTTP 503 Service Unavailable/],
+    [(async () => new Response("<html>", { status: 200, headers: { "content-type": "text/html" } })) as unknown as typeof fetch, /wasn't valid JSON \(content-type: text\/html\)/],
+    [(async () => { throw new TypeError("getaddrinfo ENOTFOUND"); }) as unknown as typeof fetch, /Couldn't reach Cobun: getaddrinfo ENOTFOUND/],
+    [(async () => { throw new DOMException("t", "TimeoutError"); }) as unknown as typeof fetch, /didn't respond within 15s/],
+    [(async () => Response.json({ stories: [] })) as unknown as typeof fetch, /no `categories` list/],
+    [(async () => Response.json({ categories: [{ label: "X", items: [{ headline: "renamed fields" }] }] })) as unknown as typeof fetch, /Only 0 usable stories \(need 3\) out of 1 items/],
+  ];
+  for (const [fetchImpl, reason] of cases) {
+    const d = await generateDigest({ now: NOW, fetchImpl });
+    assert.equal(d.items.length, 0);
+    assert.match(d.error ?? "", reason);
+  }
+  const ok = await generateDigest({ now: NOW, fetchImpl: (async () => Response.json(COBUN)) as unknown as typeof fetch });
+  assert.equal(ok.error, undefined);
+});
+
+test("failure alert explains the reason and where to fix it", () => {
+  assert.equal(digestFailureSubject("2026-11-28"), "⚠️ Daily AI News failed — 28 Nov");
+  const html = renderDigestFailureEmail({ date: "2026-11-28", error: "Cobun returned HTTP 503 <oops>.", attempts: 5, appUrl: "https://app.example" });
+  assert.match(html, /Cobun returned HTTP 503 &lt;oops&gt;\./);
+  assert.match(html, /5 \(every 15 minutes\)/);
+  assert.match(html, /supabase\/functions\/_shared\/news\.ts/);
+  assert.match(html, /data\.cobunai\.com\/digest\.json/);
+  assert.match(html, /https:\/\/app\.example/);
 });

@@ -30,7 +30,12 @@ export interface Digest {
   headline: string;
   items: DigestItem[];
   source: "cobun";
+  /** Why the digest is unusable (set when it must not be sent). */
+  error?: string;
 }
+
+/** Fewer usable stories than this means Cobun is down or changed its format. */
+export const MIN_ITEMS = 3;
 
 interface CobunItem {
   title?: unknown;
@@ -92,9 +97,8 @@ export function cleanDescription(raw: unknown, title = ""): string {
 
 /** Turns Cobun's digest.json into our digest; [] items if the payload is unusable. */
 export function parseCobunDigest(raw: unknown, date: string): Digest {
-  const categories = Array.isArray((raw as { categories?: unknown })?.categories)
-    ? ((raw as { categories: CobunCategory[] }).categories)
-    : [];
+  const hasCategories = Array.isArray((raw as { categories?: unknown })?.categories);
+  const categories = hasCategories ? ((raw as { categories: CobunCategory[] }).categories) : [];
 
   const seen = new Set<string>();
   const perCategory: DigestItem[][] = categories.map((cat) => {
@@ -138,7 +142,16 @@ export function parseCobunDigest(raw: unknown, date: string): Digest {
     items.length > 0
       ? `${items.length} stories today across ${areas.slice(0, 3).join(", ")}${areas.length > 3 ? " and more" : ""}.`
       : "";
-  return { version: DIGEST_VERSION, date, headline, items, source: "cobun" };
+  let error: string | undefined;
+  if (!hasCategories) {
+    error = "Cobun's data format changed: the response has no `categories` list.";
+  } else if (items.length < MIN_ITEMS) {
+    const total = categories.reduce((n, c) => n + (Array.isArray(c.items) ? c.items.length : 0), 0);
+    error =
+      `Only ${items.length} usable stories (need ${MIN_ITEMS}) out of ${total} items in ${categories.length} categories — ` +
+      "Cobun's format may have changed (missing title/link/description fields).";
+  }
+  return { version: DIGEST_VERSION, date, headline, items, source: "cobun", ...(error ? { error } : {}) };
 }
 
 export interface DigestOptions {
@@ -149,20 +162,34 @@ export interface DigestOptions {
   apiKey?: string | null;
 }
 
-/** Fetches today's digest; never throws (returns zero items if Cobun is unreachable). */
+/** Fetches today's digest; never throws. On failure `error` explains why and items is []. */
 export async function generateDigest(opts: DigestOptions = {}): Promise<Digest> {
   const date = istDateKey(opts.now ?? Date.now());
   const doFetch = opts.fetchImpl ?? fetch;
+  const failed = (error: string): Digest => ({ version: DIGEST_VERSION, date, headline: "", items: [], source: "cobun", error });
+  let res: Response;
   try {
-    const res = await doFetch(COBUN_DIGEST_URL, {
+    res = await doFetch(COBUN_DIGEST_URL, {
       headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
       signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
     });
-    if (!res.ok) throw new Error(`Cobun ${res.status}`);
-    return parseCobunDigest(await res.json(), date);
-  } catch {
-    return { version: DIGEST_VERSION, date, headline: "", items: [], source: "cobun" };
+  } catch (err) {
+    const name = (err as Error)?.name;
+    return failed(
+      name === "TimeoutError" || name === "AbortError"
+        ? `Cobun didn't respond within ${Math.round((opts.timeoutMs ?? 15_000) / 1000)}s.`
+        : `Couldn't reach Cobun: ${(err as Error)?.message ?? String(err)}`,
+    );
   }
+  if (!res.ok) return failed(`Cobun returned HTTP ${res.status} ${res.statusText}`.trim() + ".");
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    return failed(`Cobun's response wasn't valid JSON (content-type: ${res.headers.get("content-type") ?? "unknown"}).`);
+  }
+  const digest = parseCobunDigest(body, date);
+  return digest.error ? { ...digest, items: [] } : digest;
 }
 
 const esc = (s: string) =>
@@ -222,5 +249,39 @@ export function renderDigestEmail(digest: Digest, opts: { title?: string } = {})
       Stories curated by <a href="https://cobunai.com" style="color: #7c5cfc;">Cobun AI</a> from 26 sources — tap through for the full story.<br/>
       Sent by Life Moments · edit or delete this reminder in the app to stop it.
     </p>
+  </div>`;
+}
+
+export function digestFailureSubject(date: string): string {
+  const label = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  return `⚠️ Daily AI News failed — ${label}`;
+}
+
+/** Maintenance alert sent to the account owner when today's digest can't be built. */
+export function renderDigestFailureEmail(opts: { date: string; error: string; attempts: number; appUrl?: string }): string {
+  const when = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" });
+  const row = (k: string, v: string) =>
+    `<tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top; white-space: nowrap;">${esc(k)}</td><td style="padding: 6px 0; color: #111827;">${v}</td></tr>`;
+  return `
+  <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 16px; padding: 20px 22px; margin: 0 0 16px;">
+      <p style="margin: 0; font-size: 18px; font-weight: 700; color: #991b1b;">Today's Daily AI News couldn't be sent</p>
+      <p style="margin: 6px 0 0; color: #7f1d1d; font-size: 14px; line-height: 1.5;">
+        The news source failed on every attempt, so today's digest was skipped. Your reminder is still active and will try again tomorrow at 7:00 AM IST.
+      </p>
+    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
+      ${row("Reason", `<code style="background: #f3f4f6; padding: 2px 6px; border-radius: 6px;">${esc(opts.error)}</code>`)}
+      ${row("Attempts", `${opts.attempts} (every 15 minutes)`)}
+      ${row("Last attempt", `${esc(when)} IST`)}
+      ${row("Source", `<a href="${COBUN_DIGEST_URL}" style="color: #7c5cfc;">${COBUN_DIGEST_URL}</a> (open it to see what it returns now)`)}
+    </table>
+    <p style="margin: 0 0 6px; font-weight: 700;">Where to fix it</p>
+    <ul style="margin: 0 0 16px; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.6;">
+      <li><code>supabase/functions/_shared/news.ts</code> — fetching (<code>generateDigest</code>) and parsing (<code>parseCobunDigest</code>)</li>
+      <li>Redeploy: <code>supabase functions deploy send-reminders --use-api</code></li>
+      <li>If Cobun is just down, no action is needed — tomorrow's digest retries automatically.</li>
+    </ul>
+    <p style="color: #9ca3af; font-size: 12px;">Sent by Life Moments · only you receive this alert (not your extra recipients)${opts.appUrl ? ` · <a href="${esc(opts.appUrl)}" style="color: #9ca3af;">open the app</a>` : ""}.</p>
   </div>`;
 }
