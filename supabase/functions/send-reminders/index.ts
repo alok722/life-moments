@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { atMinutesFor, computeNextReminderAt } from "../_shared/schedule.ts";
-import { digestSubject, generateDigest, istDateKey, renderDigestEmail, type Digest } from "../_shared/news.ts";
+import { DIGEST_VERSION, digestSubject, generateDigest, istDateKey, renderDigestEmail, type Digest } from "../_shared/news.ts";
 import { generateMessages, shareLinks, type MessageSuggestion } from "../_shared/messages.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
@@ -183,12 +183,11 @@ function getTodaysDigest(supabase: Supabase): Promise<Digest> {
   const promise = (async () => {
     const { data } = await supabase.from("news_digests").select("digest").eq("digest_date", date).maybeSingle();
     const cached = data?.digest as Digest | undefined;
-    if (cached?.items?.length) return cached;
-    const digest = await generateDigest({ apiKey: GOOGLE_GEMINI_API_KEY });
+    if (cached?.items?.length && cached.version === DIGEST_VERSION) return cached;
+    const digest = await generateDigest();
     if (digest.items.length > 0) {
-      await supabase
-        .from("news_digests")
-        .upsert({ digest_date: date, digest }, { onConflict: "digest_date", ignoreDuplicates: true });
+      // Overwrites an older-format digest for the same day.
+      await supabase.from("news_digests").upsert({ digest_date: date, digest }, { onConflict: "digest_date" });
     }
     return digest;
   })();

@@ -15,7 +15,7 @@ An open-source, mobile-first reminder web app for tracking birthdays 🎂, anniv
 - **Recurring Events** — Daily, weekly, monthly, or yearly recurrence 🔁
 - **Email Notifications** — Automated email reminders via Brevo (runs every 15 min via Supabase cron) 📧
 - **AI Message Ideas** — for birthdays and anniversaries, Gemini writes 3 ready-to-send messages tuned to the relationship (heartfelt/playful for family & friends, professional for colleagues, respectful for in-laws), personalised from your notes. Shown in the app and in the reminder email with one-tap WhatsApp sharing; falls back to hand-written templates if the AI is unavailable 🤖
-- **Daily AI News** — pick the "AI News" event type to get one email every morning at 7:00 AM IST with the day's top AI stories from Hacker News, TechCrunch, MIT Technology Review and The Verge, each with a short AI summary and link (built once per day and cached) 📰
+- **Daily AI News** — pick the "AI News" event type to get one email every morning at 7:00 AM IST with ~10 top AI stories curated by [Cobun AI](https://cobunai.com) (26 sources incl. OpenAI, arXiv, Hacker News, GitHub), grouped by category, each with a short description, why it matters, and a link (fetched once per day and cached) 📰
 - **Relationship Tagging** — Tag reminders by relationship (Parent, Mother, Friend, Colleague, etc.) 👥
 - **PWA** — Installable on iOS/Android with offline shell caching via service worker 📱
 - **Dark Mode** — System-aware theme toggle (light/dark) 🌙
